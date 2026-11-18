@@ -1,9 +1,6 @@
 ---
 layout: default
 ---
-{%- comment -%}
-  보안: 포스트의 items/terms 는 AI·RSS 에서 온 값이므로 출력할 때 항상 | escape 를 붙인다.
-{%- endcomment -%}
 {%- assign latest = site.posts | first -%}
 {%- assign total_issues = 0 -%}
 {%- for p in site.posts -%}{%- assign total_issues = total_issues | plus: p.items.size -%}{%- endfor -%}
@@ -146,5 +143,4 @@ layout: default
   </div>
 </section>
 
-{%- comment -%} 히트맵·연속발행 계산용 데이터: 날짜(d)와 위협 수준(s)만. 링크 주소는 JS 가 날짜로 직접 만든다 {%- endcomment -%}
 <script type="application/json" id="archive-data">[{%- for p in site.posts -%}{"d":{{ p.date | date: "%Y-%m-%d" | jsonify }},"s":{{ p.threat_level | default: 1 | jsonify }}}{% unless forloop.last %},{% endunless %}{%- endfor -%}]</script>

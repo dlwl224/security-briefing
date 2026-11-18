@@ -7,13 +7,15 @@ from datetime import UTC, datetime, timedelta
 
 import feedparser
 import requests
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, ParserRejectedMarkup
 
 from . import config
-from .netsafe import safe_get
+from .netsafe import UnsafeURLError, safe_get
+
+FETCH_ERRORS = (requests.RequestException, UnsafeURLError, ValueError)
 
 MAX_PAGE_BYTES = 3_000_000
-MAX_FEED_BYTES = 5_000_000  # RSS 는 보통 수백 KB. 거대 XML(엔티티 폭탄 등) 방어용 상한
+MAX_FEED_BYTES = 5_000_000
 MAX_KEV_BYTES = 15_000_000
 
 session = requests.Session()
@@ -40,7 +42,7 @@ def collect_rss(since: datetime, seen: set[str]) -> list[dict]:
         try:
             body, _ = safe_get(session, feed["url"], max_bytes=MAX_FEED_BYTES)
             parsed = feedparser.parse(body)
-        except Exception as e:  # 한 소스가 죽어도 나머지는 계속
+        except FETCH_ERRORS as e:
             print(f"[warn] {feed['name']} 수집 실패: {e}")
             continue
         count = 0
@@ -74,7 +76,7 @@ def collect_kev(since: datetime, seen: set[str]) -> list[dict]:
         data = json.loads(body)
         if not isinstance(data, dict):
             raise ValueError("KEV 형식 오류")
-    except Exception as e:
+    except FETCH_ERRORS as e:
         print(f"[warn] CISA KEV 수집 실패: {e}")
         return []
     since_date = (since - timedelta(days=1)).date().isoformat()
@@ -106,7 +108,6 @@ def collect_kev(since: datetime, seen: set[str]) -> list[dict]:
 def collect_candidates(seen: set[str]) -> list[dict]:
     since = datetime.now(UTC) - timedelta(hours=config.LOOKBACK_HOURS)
     items = collect_rss(since, seen) + collect_kev(since, seen)
-    # 제목이 같은 중복 제거
     uniq, titles = [], set()
     for it in items:
         key = re.sub(r"\W+", "", it["title"].lower())[:60]
@@ -131,7 +132,6 @@ def fetch_article_text(item: dict) -> str:
             f"랜섬웨어 악용 여부: {v.get('knownRansomwareCampaignUse')}\nCWE: {', '.join(v.get('cwes', []))}"
         )
     try:
-        # SSRF 방어 + 크기 제한 (netsafe.safe_get)
         raw, resp = safe_get(session, item["link"], max_bytes=MAX_PAGE_BYTES)
         if "html" not in resp.headers.get("Content-Type", "html"):
             return item["snippet"]
@@ -140,7 +140,7 @@ def fetch_article_text(item: dict) -> str:
         for tag in soup(["script", "style", "nav", "header", "footer", "aside", "form"]):
             tag.decompose()
         root = (
-            soup.find(id="article-view-content-div")  # 보안뉴스·데일리시큐 등 국내 언론 CMS
+            soup.find(id="article-view-content-div")
             or soup.find("article")
             or soup.find(id=re.compile("article|content|news", re.I))
             or soup.body
@@ -148,10 +148,10 @@ def fetch_article_text(item: dict) -> str:
         )
         paras = [p.get_text(" ", strip=True) for p in root.find_all(["p", "div"]) if p.find(["p", "div"]) is None]
         text = re.sub(r"\s+", " ", " ".join(t for t in paras if len(t) > 30))
-        if len(text) < 200:  # <p> 없이 <br>로만 된 본문
+        if len(text) < 200:
             text = re.sub(r"\s+", " ", root.get_text(" ", strip=True))
         if len(text) > 200:
             return text[: config.ARTICLE_CHARS]
-    except Exception as e:
+    except (*FETCH_ERRORS, ParserRejectedMarkup, AttributeError, TypeError) as e:
         print(f"[warn] 본문 수집 실패 {item['link']}: {e}")
     return item["snippet"]

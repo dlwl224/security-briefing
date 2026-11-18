@@ -2,10 +2,9 @@ name: Daily Security Briefing
 
 on:
   schedule:
-    - cron: "0 0 * * *"   # 매일 00:00 UTC = 오전 9시 KST
-  workflow_dispatch:       # Actions 탭에서 수동 실행 (테스트용)
+    - cron: "0 0 * * *"
+  workflow_dispatch:
 
-# 최소 권한 원칙 (OWASP A01/A08): 기본은 권한 없음, 필요한 job 에만 부여
 permissions: {}
 
 concurrency:
@@ -17,9 +16,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     permissions:
-      contents: write     # 브리핑 글 커밋용 (이 외 권한 없음)
+      contents: write
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1 (태그 대신 커밋 SHA로 고정: 공급망 공격 방지)
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
 
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0  # v7.1.0
         with:
@@ -35,8 +34,8 @@ jobs:
       - name: Generate briefing
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}   # 선택 사항: 비우면 자동 선택
-          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}  # 선택 사항: 없어도 동작 (있으면 NVD 호출 한도 증가)
+          GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
         run: python -m briefing daily
 
       - name: Commit & push

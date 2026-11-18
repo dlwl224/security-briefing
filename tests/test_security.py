@@ -1,7 +1,4 @@
-"""악성 입력(XSS, 링크 삽입, 템플릿/YAML 인젝션)이 블로그·디스코드에 그대로 나가지 않는지 확인.
-
-실행: python -m unittest discover tests
-"""
+"""악성 입력(XSS, 링크 삽입, 템플릿/YAML 인젝션)이 블로그·디스코드에 그대로 나가지 않는지 확인."""
 
 import re
 import sys
@@ -38,8 +35,6 @@ class RenderSecurityTest(unittest.TestCase):
         _, cls.front, cls.body = cls.text.split("---\n", 2)
 
     def test_no_html_tags(self):
-        # 본문(마크다운)에는 HTML 태그가 그대로 남으면 안 됨.
-        # front matter 의 items 는 평문 데이터이고, 레이아웃이 | escape 로 출력함 (TemplateEscapeTest 가 검사)
         self.assertIsNone(re.search(r"<(script|img|b)\b", self.body))
 
     def test_front_matter_items_are_valid_json_data(self):
@@ -47,11 +42,10 @@ class RenderSecurityTest(unittest.TestCase):
 
         items_line = next(l for l in self.front.splitlines() if l.startswith("items: "))
         items = json.loads(items_line[len("items: ") :])
-        self.assertEqual(items[0]["link"], "")  # javascript: 링크 제거
-        self.assertNotIn("\n", items[0]["title"])  # 한 줄 평문
+        self.assertEqual(items[0]["link"], "")
+        self.assertNotIn("\n", items[0]["title"])
 
     def test_no_injected_markdown_links(self):
-        # 이스케이프되지 않은 '](' 는 우리가 넣은 용어 사전 링크 하나뿐이어야 함
         self.assertEqual(re.findall(r"(?<!\\)\]\(", self.body), ["]("])
 
     def test_no_liquid(self):
@@ -73,8 +67,8 @@ class RenderSecurityTest(unittest.TestCase):
         e = render.normalize({**ENTRY, "category": "사고", "severity": "99", "cvss": "abc", "cve": "<b>CVE"})
         self.assertEqual((e["severity"], e["cvss"], e["cve"]), (5, 0.0, ""))
         item = render.structured_item(e)
-        self.assertEqual(item["link"], "")  # javascript: 링크 제거
-        self.assertNotIn("\n", item["core"])  # 제어문자/개행 제거
+        self.assertEqual(item["link"], "")
+        self.assertNotIn("\n", item["core"])
 
     def test_unsafe_url_rejected(self):
         self.assertEqual(render.safe_url("javascript:alert(1)"), "")
@@ -101,7 +95,6 @@ class TemplateEscapeTest(unittest.TestCase):
     """레이아웃이 AI/RSS 에서 온 문자열 필드를 출력할 때 반드시 | escape 를 쓰는지 정적 검사."""
 
     ROOT = Path(__file__).resolve().parent.parent
-    # 숫자·날짜·내부 URL 등 생성 단계에서 검증되는 필드는 예외
     SAFE_FIELDS = frozenset(
         {
             "severity",
@@ -130,9 +123,7 @@ class TemplateEscapeTest(unittest.TestCase):
         bad = []
         for f in files:
             text = f.read_text(encoding="utf-8")
-            # (1) 객체 필드 출력: it.title, t.term, f.v, cm[ck], site.data.isms_p[c] ...
             pattern = r"\{\{-?\s*((?:it|t|p|m|f|cm|latest|page|site\.data\.\w+)[.\[][\w.\[\]\"]*)([^}]*)\}\}"
-            # (2) 사람·AI 가 쓴 값을 담는 단순 변수: 코멘트(note, day_note), 매핑 코드(c), 근거(r), 권고(a)
             bare = r"\{\{-?\s*(note|day_note|c|r|a|b)\b()([^}]*)\}\}"
             for m in list(re.finditer(pattern, text)) + list(re.finditer(bare, text)):
                 var, filters = m.group(1), m.group(m.lastindex)

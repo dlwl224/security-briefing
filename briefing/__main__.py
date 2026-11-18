@@ -1,12 +1,4 @@
-"""명령줄 진입점 — 모든 실행은 `python -m briefing <명령>` 하나로 통일한다.
-
-python -m briefing daily              매일 브리핑 생성 (GitHub Actions 09:00 KST)
-python -m briefing daily --dry-run    AI 없이 수집·글 생성만 시험
-python -m briefing notify             오늘 브리핑을 디스코드로 알림
-python -m briefing notify --failed    실행 실패 알림
-python -m briefing feedback           새로 쓴 분석 노트에 AI 코칭 (BEFORE/AFTER 환경변수)
-python -m briefing feedback --dry-run 2026-11-18
-"""
+"""명령줄 진입점 — 모든 실행은 `python -m briefing <명령>` 하나로 통일한다."""
 
 import argparse
 import re

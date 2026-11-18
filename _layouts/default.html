@@ -3,10 +3,6 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  {%- comment -%}
-    보안: 외부 스크립트·폰트·CDN을 전혀 쓰지 않으므로 'self'만 허용하는 엄격한 CSP를 건다.
-    인라인 <script>/<style>/style="" 은 모두 차단된다 (JSON 데이터 블록은 실행되지 않으므로 허용).
-  {%- endcomment %}
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; manifest-src 'self'; base-uri 'none'; form-action 'none'; upgrade-insecure-requests">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <meta name="color-scheme" content="light dark">
@@ -49,7 +45,6 @@
       <p class="footer__meta mono">Static · No trackers · CSP strict · Built with GitHub Actions</p>
     </div>
   </footer>
-  {%- comment -%} ⓘ 툴팁용 지표 설명 (실행되지 않는 JSON 데이터 블록) {%- endcomment %}
   <script type="application/json" id="metrics-data">{{ site.data.metrics | jsonify | replace: "</", "<\/" }}</script>
 </body>
 </html>

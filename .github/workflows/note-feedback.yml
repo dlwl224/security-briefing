@@ -1,7 +1,5 @@
 name: Analysis Note Feedback
 
-# 분석 노트(_data/comments/*.yml)를 사람이 커밋하면 AI 코칭을 디스코드로 보낸다.
-# (봇이 매일 만드는 빈 양식은 GITHUB_TOKEN 으로 push 되므로 이 워크플로를 실행시키지 않는다)
 on:
   push:
     branches: [main]
@@ -18,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
-      contents: read          # 읽기만 (사이트·저장소를 바꾸지 않음)
+      contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
@@ -35,11 +33,10 @@ jobs:
 
       - name: Send feedback
         env:
-          # 커밋 값은 환경변수로 넘긴다 (run 스크립트에 직접 넣지 않음 → 표현식 주입 방지)
           BEFORE: ${{ github.event.before }}
           AFTER: ${{ github.sha }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-          DISCORD_FEEDBACK_WEBHOOK_URL: ${{ secrets.DISCORD_FEEDBACK_WEBHOOK_URL }}   # 선택: 피드백 전용 채널
+          DISCORD_FEEDBACK_WEBHOOK_URL: ${{ secrets.DISCORD_FEEDBACK_WEBHOOK_URL }}
         run: python -m briefing feedback

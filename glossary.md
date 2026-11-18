@@ -5,7 +5,6 @@ ghost: Glossary
 kicker: GLOSSARY
 permalink: /glossary/
 ---
-{%- comment -%}용어 데이터는 AI가 만든 값이므로 모든 출력에 escape 필터를 적용해 XSS를 막는다.{%- endcomment -%}
 {%- assign terms = site.data.glossary | sort: "term" -%}
 <p class="hero__sub glossary-lead">매일 브리핑에 등장한 보안 용어 <b>{{ terms.size }}</b>개를 모았습니다.</p>
 

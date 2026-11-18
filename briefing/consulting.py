@@ -1,8 +1,4 @@
-"""컨설팅 관점 정보: CVSS 벡터 해석, 조치 우선순위, 규제·프레임워크 매핑 검증.
-
-원칙: 공식 데이터로 계산할 수 있는 것은 규칙으로(재현 가능), AI 가 제안한 매핑은
-허용 목록(_data/*.json) 안에 있는 값만 통과시키고 화면에 'AI 제안'으로 표시한다.
-"""
+"""컨설팅 관점 정보: CVSS 벡터 해석, 조치 우선순위, 규제·프레임워크 매핑 검증."""
 
 import json
 import re
@@ -21,10 +17,6 @@ ISMS_P = _load("isms_p.json")
 ATTACK = _load("attack.json")
 CWE_RE = re.compile(r"^CWE-\d{1,5}$")
 
-# ---------------------------------------------------------------------------
-# 1) CVSS 벡터 → 한국어 요인 (v3.x / v4.0 기본 지표만)
-#    level: "bad" = 공격자에게 유리(위험), "ok" = 공격을 어렵게 하는 요인
-# ---------------------------------------------------------------------------
 FACTORS = {
     "AV": (
         "공격 경로",
@@ -80,9 +72,6 @@ def decode_vector(vector: str) -> list[dict]:
     return out
 
 
-# ---------------------------------------------------------------------------
-# 2) 조치 우선순위 — 공개 규칙 (CISA KEV + FIRST EPSS + CVSS)
-# ---------------------------------------------------------------------------
 PRIORITY_RULES = [
     ("P1", "즉시 조치", "72시간 이내 패치·완화"),
     ("P2", "우선 조치", "2주 이내 패치"),
@@ -95,7 +84,7 @@ def priority(e: dict) -> dict:
     if not e.get("cve"):
         return {"priority": "", "priority_reasons": []}
     cvss = float(e.get("cvss") or 0)
-    epss = float(e.get("epss") or 0)  # % 단위
+    epss = float(e.get("epss") or 0)
     reasons = []
     if e.get("kev"):
         reasons.append("CISA KEV 등재(실제 악용 확인)")
@@ -114,13 +103,6 @@ def priority(e: dict) -> dict:
     return {"priority": level, "priority_reasons": reasons}
 
 
-# ---------------------------------------------------------------------------
-# 2-1) 위험도 — 운영자와 함께 정한 규칙 (AI 는 '사실'만 판정, 점수는 공식으로 계산)
-#   실제 악용: 없음 0 / 공격 가능성 공개 +1 / 실제 공격·악용 확인 +2  (KEV 등재면 자동 '확인')
-#   피해 규모: 불명·소규모 0 / 중간 +1 / 대규모 +2
-#   대상 중요도(핵심 업종) +1, 국내 관련성 +1
-#   합계를 1~5 로 자름. 정책·동향 기사는 점수 없이 '참고'.
-# ---------------------------------------------------------------------------
 EXPLOIT = {"none": (0, "악용 확인 안 됨"), "poc": (1, "공격 가능성 공개"), "active": (2, "실제 공격·악용 확인")}
 SCALE = {"unknown": (0, "규모 불명"), "small": (0, "소규모"), "medium": (1, "규모 중간"), "large": (2, "대규모")}
 REFERENCE_CATEGORIES = {"정책", "위협동향"}
@@ -132,10 +114,9 @@ def severity(e: dict) -> dict:
         return {"severity": None, "severity_basis": ["정책·동향 기사 → 위험도 대신 '참고'"], "severity_method": "rule"}
     exploit, scale = e.get("exploitation"), e.get("scale")
     if exploit not in EXPLOIT or scale not in SCALE:
-        # 요소 판정이 없는 예전 글: 기존 AI 종합 판단 값을 그대로 쓰되 방식 표시
         return {"severity": e.get("severity"), "severity_basis": [], "severity_method": "ai"}
     if e.get("kev"):
-        exploit = "active"  # 공식 데이터가 AI 판정보다 우선
+        exploit = "active"
     basis, total = [], 0
     for table, key in ((EXPLOIT, exploit), (SCALE, scale)):
         pts, label = table[key]
@@ -152,13 +133,10 @@ def severity(e: dict) -> dict:
     return {"severity": min(5, max(1, total)), "severity_basis": basis, "severity_method": "rule"}
 
 
-# ---------------------------------------------------------------------------
-# 3) 매핑 검증 — 허용 목록 밖의 값(AI 환각)은 버린다
-# ---------------------------------------------------------------------------
 def clean_codes(values, allowed: dict, limit: int = 4) -> list[str]:
     out = []
     for v in values if isinstance(values, list) else []:
-        v = str(v).strip().upper()  # 't1190' → 'T1190', '2.10.8' 은 그대로
+        v = str(v).strip().upper()
         if v in allowed and v not in out:
             out.append(v)
     return out[:limit]

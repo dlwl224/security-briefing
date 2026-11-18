@@ -1,12 +1,7 @@
 ---
 layout: default
 ---
-{%- comment -%}
-  보안: items/terms 는 AI·RSS 에서 온 값 → 출력 시 항상 | escape.
-  링크는 생성 단계(render.safe_url)에서 http(s)만 통과시키고, 여기서도 escape.
-{%- endcomment -%}
 {%- assign no = page.issue_no | default: 1 | prepend: "00" | slice: -3, 3 -%}
-{%- comment -%} 사람이 쓴 분석 노트: _data/comments/YYYY-MM-DD.yml {%- endcomment -%}
 {%- assign dkey = page.date | date: "%Y-%m-%d" -%}
 {%- assign cm = site.data.comments[dkey] -%}
 {%- assign day_note = "" -%}{%- if cm -%}{%- assign day_note = cm.summary | default: "" | strip -%}{%- endif -%}
@@ -142,7 +137,6 @@ layout: default
         </section>
       </div>
 
-      {%- comment -%} ===== 컨설팅 뷰: 우선순위(규칙) · 권고 조치(AI 초안) · 매핑 · 분석 노트(사람) ===== {%- endcomment -%}
       {%- assign ck = "issue" | append: forloop.index -%}
       {%- assign note = "" -%}{%- if cm -%}{%- assign note = cm[ck] | default: "" | strip -%}{%- endif -%}
       {%- assign has_map = false -%}
@@ -249,7 +243,6 @@ layout: default
 {%- endif -%}
 
 {%- else -%}
-{%- comment -%} 구조화 데이터가 없는 예전 형식 글 {%- endcomment -%}
 <div class="wrap page-body"><div class="prose">{{ content }}</div></div>
 {%- endif -%}
 
