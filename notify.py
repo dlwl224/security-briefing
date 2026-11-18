@@ -68,9 +68,19 @@ def main() -> int:
     lines = []
     for i, it in enumerate(data["items"], 1):
         core = it["core"] if len(it["core"]) <= 160 else it["core"][:157] + "…"
+        badges = []
+        if it.get("kev") is True:
+            badges.append("🔴 실제 악용(KEV)")
+        try:
+            score = float(it.get("cvss") or 0)
+            if 0 < score <= 10:
+                badges.append(f"CVSS {score:.1f}")
+        except (TypeError, ValueError):
+            pass
+        badge = f"`{' · '.join(badges)}`\n" if badges else ""
         lines.append(
             f"**{i}. {EMOJI.get(it['category'], '🔎')} [{discord_safe(it['region'])}] {discord_safe(it['title'])}**\n"
-            f"{discord_safe(core)}"
+            f"{badge}{discord_safe(core)}"
         )
     desc = "\n\n".join(lines)[:3900]
 

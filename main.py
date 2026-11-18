@@ -9,7 +9,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-from briefing import collect, config, render
+from briefing import collect, config, enrich, render
 
 ROOT = Path(__file__).resolve().parent
 SEEN = ROOT / "data" / "seen.json"
@@ -57,11 +57,16 @@ def main() -> int:
         for s in result.get("items", []):
             if 0 <= s["index"] < len(picked):
                 src = picked[s["index"]]
-                entries.append({**s, "region": src["region"], "source": src["source"], "link": src["link"]})
+                entries.append({**s, "region": src["region"], "source": src["source"], "link": src["link"],
+                                "_text": src["text"]})
         terms = result.get("terms", [])
         summary = result.get("daily_summary", "")
         if not entries:
             raise RuntimeError("요약 결과가 비어 있음")
+
+    if not dry:
+        # 위험도·요약은 AI 판단, CVE/CVSS/EPSS/KEV 는 공식 데이터로 검증·보강
+        enrich.enrich(entries, [e.get("_text", "") for e in entries])
 
     path = render.write_post(date, entries, terms, summary)
     added = render.update_glossary(date, terms)
@@ -74,7 +79,8 @@ def main() -> int:
     OUT.write_text(json.dumps({
         "date": date,
         "url": render.site_url() + render.post_path(date),
-        "items": [{k: e[k] for k in ("title", "region", "category", "core", "link")} for e in entries],
+        "items": [{**{k: e[k] for k in ("title", "region", "category", "core", "link")},
+                   "cve": e.get("cve", ""), "cvss": e.get("cvss", 0), "kev": bool(e.get("kev"))} for e in entries],
         "terms": [t["term"] for t in terms],
         "summary": summary,
     }, ensure_ascii=False, indent=2), encoding="utf-8")

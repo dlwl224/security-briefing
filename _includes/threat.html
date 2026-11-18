@@ -1,4 +1,4 @@
-{%- comment -%} 위협 수준 미터. include.level: 1~5 {%- endcomment -%}
+{%- comment -%} 위협 수준 미터. include.level: 1~5 (그날 5건의 AI 평가 위험도 평균) {%- endcomment -%}
 {%- assign lv = include.level | default: 1 | plus: 0 -%}
 {%- case lv -%}
   {%- when 5 -%}{%- assign label = "심각" -%}{%- assign en = "CRITICAL" -%}
@@ -7,12 +7,12 @@
   {%- when 2 -%}{%- assign label = "관심" -%}{%- assign en = "GUARDED" -%}
   {%- else -%}{%- assign label = "낮음" -%}{%- assign en = "LOW" -%}
 {%- endcase -%}
-<div class="threat" data-sev="{{ lv }}" role="img" aria-label="위협 수준: {{ label }} (5단계 중 {{ lv }})">
+<div class="threat" data-sev="{{ lv }}">
   <div class="threat__head">
-    <span class="threat__k mono">THREAT LEVEL</span>
+    <span class="threat__k mono">THREAT LEVEL · AI 평가 {% include info.html key="threat" %}</span>
     <span class="threat__v"><b>{{ label }}</b> <span class="mono">{{ en }}</span></span>
   </div>
-  <div class="threat__bar" aria-hidden="true">
+  <div class="threat__bar" role="img" aria-label="AI 평가 위협 수준: {{ label }} (5단계 중 {{ lv }})">
     {%- for i in (1..5) -%}<span class="threat__seg{% if i <= lv %} is-on{% endif %}"></span>{%- endfor -%}
   </div>
 </div>

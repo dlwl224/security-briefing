@@ -1,0 +1,7 @@
+{%- case include.severity -%}
+{%- when "CRITICAL" -%}치명적
+{%- when "HIGH" -%}높음
+{%- when "MEDIUM" -%}중간
+{%- when "LOW" -%}낮음
+{%- else -%}없음
+{%- endcase -%}

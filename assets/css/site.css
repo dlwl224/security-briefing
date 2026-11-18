@@ -495,3 +495,54 @@ a.heat__cell:hover, a.heat__cell:focus-visible { transform: scale(1.5); }
 .tcard[hidden] { display: none; }
 .card__figure--cve b { font-size: clamp(18px, 1.9vw, 24px) !important; font-weight: 650; letter-spacing: -.01em !important; }
 .chips--lg .chip { height: 32px; padding: 0 14px; font-size: 14px; color: var(--ink); background: var(--surface-2); }
+
+/* =========================================================
+   METRICS — 공식 지표 카드, AI 라벨, ⓘ 버튼
+   ========================================================= */
+[data-cvss="LOW"] { --cv: var(--sev-2); }
+[data-cvss="MEDIUM"] { --cv: var(--sev-3); }
+[data-cvss="HIGH"] { --cv: var(--sev-4); }
+[data-cvss="CRITICAL"] { --cv: var(--sev-5); }
+
+.info {
+  all: unset; cursor: pointer; display: inline-grid; place-items: center; width: 16px; height: 16px; border-radius: 50%;
+  font: 700 10px/1 var(--sans); color: var(--ink-3); box-shadow: inset 0 0 0 1.2px currentColor;
+  vertical-align: 1px; margin-left: 2px; transition: color .2s, background .2s, transform .3s var(--spring);
+  text-transform: none; letter-spacing: 0; font-style: italic;
+}
+.info:hover, .info:focus-visible, .info[aria-expanded="true"] { color: var(--bg); background: var(--ink); box-shadow: none; transform: scale(1.12); }
+.info::after { content: ""; position: absolute; inset: -12px; } /* 터치 영역 44px 확보 */
+.info { position: relative; }
+
+.chip--ai { background: transparent; box-shadow: inset 0 0 0 1px var(--line-2); color: var(--ink-2); gap: 4px; }
+.chip--ai b { color: var(--sig); }
+.chip--kev { background: var(--sev-5); color: #fff; }
+
+.fact__row { display: flex; align-items: baseline; gap: 10px; }
+.fact__v small { font-size: .45em; font-weight: 650; margin-left: 2px; color: var(--ink-3); }
+.fact__v--text { font-size: clamp(22px, 2.2vw, 28px); color: var(--sev-5); letter-spacing: -.03em; }
+.fact__l .ok { color: #1f8a4c; font-weight: 600; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .fact__l .ok { color: #4cc27f; } }
+.fact__l a { border-bottom: 1px solid var(--line-2); }
+.band { display: inline-flex; align-items: center; height: 24px; padding: 0 10px; border-radius: 99px; font-size: 12px; font-weight: 700; color: #fff; background: var(--cv, var(--ink-3)); }
+.fact--cvss .meter i { background: var(--cv, var(--sig)); }
+.meter--bands { position: relative; overflow: visible; }
+.meter--bands::after { /* 4.0 / 7.0 / 9.0 등급 경계 눈금 */
+  content: ""; position: absolute; inset: -3px 0; pointer-events: none;
+  background:
+    linear-gradient(var(--surface), var(--surface)) 40% 0 / 2px 100% no-repeat,
+    linear-gradient(var(--surface), var(--surface)) 70% 0 / 2px 100% no-repeat,
+    linear-gradient(var(--surface), var(--surface)) 90% 0 / 2px 100% no-repeat;
+}
+.vector { font: 11px/1.5 var(--mono); color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+.fact--kev { box-shadow: var(--shadow), inset 0 0 0 1.5px color-mix(in srgb, var(--sev-5) 45%, transparent); }
+
+.tip p { margin: 0; }
+.tip .tip__sub { display: block; font: 400 11px var(--mono); opacity: .6; margin: 2px 0 8px; }
+
+/* About — 지표 읽는 법 */
+.guide { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; margin: 8px 0 24px; }
+.guide .tcard__t small { font: 400 11px var(--mono); color: var(--ink-3); margin-left: 6px; }
+.scale { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-top: 6px; }
+.scale span { display: grid; gap: 2px; padding: 10px; border-radius: 10px; color: #fff; font-size: 12px; font-weight: 700; background: var(--cv); }
+.scale span small { font: 500 11px var(--mono); opacity: .9; }

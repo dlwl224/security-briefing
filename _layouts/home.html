@@ -49,12 +49,17 @@ layout: default
           <span class="chips">
             <span class="chip">{{ it.region | escape }}</span>
             <span class="chip chip--sev">{{ it.category | escape }}</span>
+            {%- if it.kev -%}<span class="chip chip--kev">KEV</span>{%- endif -%}
           </span>
         </div>
         {%- if it.key_figure and it.key_figure != "" -%}
         <div class="card__figure"><b>{{ it.key_figure | escape }}</b><span>{{ it.key_figure_label | escape }}</span></div>
         {%- elsif it.cve and it.cve != "" -%}
-        <div class="card__figure card__figure--cve"><b class="mono">{{ it.cve | escape }}</b><span>{% if it.cvss > 0 %}CVSS {{ it.cvss }}{% else %}CVE ID{% endif %}</span></div>
+        {%- if it.cvss > 0 -%}
+        <div class="card__figure"><b>{{ it.cvss }}</b><span>CVSS · {% include cvss-label.html severity=it.cvss_severity %} · {{ it.cve | escape }}</span></div>
+        {%- else -%}
+        <div class="card__figure card__figure--cve"><b class="mono">{{ it.cve | escape }}</b><span>CVE ID</span></div>
+        {%- endif -%}
         {%- endif -%}
         <h3 class="card__title">{{ it.title | escape }}</h3>
         {%- if forloop.first -%}<p class="card__text">{{ it.core | escape }}</p>{%- endif -%}

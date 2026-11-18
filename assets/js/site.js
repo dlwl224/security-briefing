@@ -159,44 +159,57 @@
     issues.forEach((s) => rio.observe(s));
   }
 
-  /* ---------- 7. 브리핑: 본문 속 보안 용어 → 툴팁 ---------- */
-  const terms = readJSON("terms-data");
+  /* ---------- 7. 툴팁: 본문 속 보안 용어 + 지표 ⓘ 버튼 ---------- */
+  const terms = readJSON("terms-data") || [];
+  const metrics = readJSON("metrics-data") || {};
+  const TRIGGER = ".term, .info";
+  const tip = document.createElement("div");
+  tip.className = "tip";
+  tip.id = "term-tip";
+  tip.setAttribute("role", "tooltip");
+  document.body.appendChild(tip);
+  let openBtn = null;
+
+  // 버튼 → {title, sub, body}. 모든 값은 textContent 로만 넣는다.
+  const contentFor = (btn) => {
+    if (btn.classList.contains("info")) {
+      const key = btn.dataset.info;
+      const m = Object.prototype.hasOwnProperty.call(metrics, key) ? metrics[key] : null;
+      return m && { title: m.title, sub: m.sub, body: m.body };
+    }
+    const t = terms[Number(btn.dataset.idx)];
+    return t && { title: t.term, sub: t.english, body: t.definition };
+  };
+
+  const show = (btn) => {
+    const c = contentFor(btn);
+    if (!c) return;
+    const b = document.createElement("b");
+    b.textContent = String(c.title || "");
+    const sub = document.createElement("span");
+    sub.className = "tip__sub";
+    sub.textContent = String(c.sub || "");
+    const d = document.createElement("p");
+    d.textContent = String(c.body || "");
+    tip.replaceChildren(b, sub, d);
+    tip.classList.add("is-open");
+    const r = btn.getBoundingClientRect();
+    const w = tip.offsetWidth || 320;
+    const left = Math.max(16, Math.min(scrollX + r.left + r.width / 2 - w / 2, scrollX + innerWidth - w - 16));
+    const below = r.bottom + 10 + tip.offsetHeight < innerHeight;
+    tip.style.left = `${left}px`;
+    tip.style.top = `${scrollY + (below ? r.bottom + 10 : r.top - tip.offsetHeight - 10)}px`;
+    if (openBtn && openBtn !== btn) openBtn.setAttribute("aria-expanded", "false");
+    btn.setAttribute("aria-expanded", "true");
+    openBtn = btn;
+  };
+  const hide = () => {
+    tip.classList.remove("is-open");
+    if (openBtn) openBtn.setAttribute("aria-expanded", "false");
+    openBtn = null;
+  };
+
   if (Array.isArray(terms) && terms.length) {
-    const tip = document.createElement("div");
-    tip.className = "tip";
-    tip.id = "term-tip";
-    tip.setAttribute("role", "tooltip");
-    document.body.appendChild(tip);
-    let openBtn = null;
-
-    const show = (btn) => {
-      const t = terms[Number(btn.dataset.idx)];
-      if (!t) return;
-      tip.replaceChildren();
-      const b = document.createElement("b");
-      b.textContent = String(t.term || "");
-      const en = document.createElement("span");
-      en.textContent = String(t.english || "");
-      b.appendChild(en);
-      const d = document.createElement("p");
-      d.textContent = String(t.definition || "");
-      tip.append(b, d);
-      const r = btn.getBoundingClientRect();
-      const w = tip.offsetWidth || 320;
-      const left = Math.max(16, Math.min(scrollX + r.left + r.width / 2 - w / 2, scrollX + innerWidth - w - 16));
-      tip.style.left = `${left}px`;
-      tip.style.top = `${scrollY + r.bottom + 10}px`;
-      tip.classList.add("is-open");
-      if (openBtn && openBtn !== btn) openBtn.setAttribute("aria-expanded", "false");
-      btn.setAttribute("aria-expanded", "true");
-      openBtn = btn;
-    };
-    const hide = () => {
-      tip.classList.remove("is-open");
-      if (openBtn) openBtn.setAttribute("aria-expanded", "false");
-      openBtn = null;
-    };
-
     const used = new Set();
     const keys = terms
       .map((t, i) => ({ i, k: String(t.term || "").trim() }))
@@ -228,21 +241,24 @@
       });
     });
 
-    document.addEventListener("click", (e) => {
-      const btn = e.target.closest && e.target.closest(".term");
-      if (btn) { e.preventDefault(); openBtn === btn ? hide() : show(btn); } else hide();
-    });
-    document.addEventListener("pointerover", (e) => {
-      const btn = e.target.closest && e.target.closest(".term");
-      if (btn && matchMedia("(hover: hover)").matches) show(btn);
-    });
-    document.addEventListener("pointerout", (e) => {
-      if (e.target.closest && e.target.closest(".term") && matchMedia("(hover: hover)").matches) hide();
-    });
-    document.addEventListener("focusin", (e) => { if (e.target.classList && e.target.classList.contains("term")) show(e.target); });
-    document.addEventListener("keydown", (e) => { if (e.key === "Escape") hide(); });
-    addEventListener("resize", hide);
   }
+
+  const hoverable = matchMedia("(hover: hover)");
+  document.addEventListener("click", (e) => {
+    const btn = e.target.closest && e.target.closest(TRIGGER);
+    if (btn) { e.preventDefault(); e.stopPropagation(); openBtn === btn ? hide() : show(btn); } else hide();
+  });
+  document.addEventListener("pointerover", (e) => {
+    const btn = e.target.closest && e.target.closest(TRIGGER);
+    if (btn && hoverable.matches) show(btn);
+  });
+  document.addEventListener("pointerout", (e) => {
+    if (e.target.closest && e.target.closest(TRIGGER) && hoverable.matches) hide();
+  });
+  document.addEventListener("focusin", (e) => { if (e.target.matches && e.target.matches(TRIGGER)) show(e.target); });
+  document.addEventListener("focusout", (e) => { if (e.target.matches && e.target.matches(TRIGGER)) hide(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") hide(); });
+  addEventListener("resize", hide);
 
   /* ---------- 8. About: 파이프라인 선 그리기 ---------- */
   const pipe = $(".pipe");

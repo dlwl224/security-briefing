@@ -49,25 +49,60 @@ layout: default
         <span class="issue__no" aria-hidden="true">{{ n }}</span>
         <div class="chips">
           <span class="chip">{{ it.region | escape }}</span>
-          <span class="chip chip--sev">{{ it.category | escape }} · 위험도 {{ sev }}/5</span>
+          <span class="chip chip--sev">{{ it.category | escape }}</span>
+          <span class="chip chip--ai"><span>AI 평가 위험도 <b>{{ sev }}</b>/5</span>{% include info.html key="severity" %}</span>
+          {%- if it.kev -%}<span class="chip chip--kev">실제 악용 확인 · KEV</span>{%- endif -%}
         </div>
         <h2 class="issue__title" id="issue-{{ forloop.index }}-t">{{ it.title | escape }}</h2>
       </header>
 
       {%- assign has_fig = false -%}{%- if it.key_figure and it.key_figure != "" -%}{%- assign has_fig = true -%}{%- endif -%}
       {%- assign has_cve = false -%}{%- if it.cve and it.cve != "" -%}{%- assign has_cve = true -%}{%- endif -%}
-      {%- if has_fig or has_cve or it.cvss > 0 -%}
+      {%- if has_fig or has_cve or it.cvss > 0 or it.kev -%}
       <div class="facts" data-reveal>
         {%- if has_fig -%}
         <div class="fact"><span class="fact__k">Key figure</span><b class="fact__v">{{ it.key_figure | escape }}</b><span class="fact__l">{{ it.key_figure_label | escape }}</span></div>
         {%- endif -%}
         {%- if has_cve -%}
-        <div class="fact"><span class="fact__k">CVE</span><b class="fact__v mono">{{ it.cve | escape }}</b>
-          <a class="fact__l" href="https://nvd.nist.gov/vuln/detail/{{ it.cve | escape }}" target="_blank" rel="noopener noreferrer nofollow">NVD에서 보기 ↗</a></div>
+        <div class="fact">
+          <span class="fact__k">CVE {% include info.html key="cve" %}</span>
+          <b class="fact__v mono">{{ it.cve | escape }}</b>
+          <span class="fact__l">
+            {%- if it.cve_status == "nvd" -%}<span class="ok">✓ NVD 등록 확인</span>
+            {%- elsif it.cve_status == "pending" -%}NVD 미등록 · 기사 원문 기준
+            {%- endif %} · <a href="https://nvd.nist.gov/vuln/detail/{{ it.cve | escape }}" target="_blank" rel="noopener noreferrer nofollow">NVD ↗</a>
+          </span>
+        </div>
         {%- endif -%}
         {%- if it.cvss > 0 -%}
-        <div class="fact"><span class="fact__k">CVSS</span><b class="fact__v">{{ it.cvss }}</b>
-          <span class="meter" data-v="{{ it.cvss | round }}" aria-label="CVSS {{ it.cvss }} / 10"><i></i></span></div>
+        {%- capture cv_label -%}{% include cvss-label.html severity=it.cvss_severity %}{%- endcapture -%}
+        <div class="fact fact--cvss" data-cvss="{{ it.cvss_severity | escape }}">
+          <span class="fact__k">CVSS {% if it.cvss_version != "" %}v{{ it.cvss_version | escape }}{% endif %} {% include info.html key="cvss" %}</span>
+          <span class="fact__row"><b class="fact__v">{{ it.cvss }}</b><span class="band">{{ cv_label }}</span></span>
+          <span class="meter meter--bands" data-v="{{ it.cvss | round }}" role="img" aria-label="CVSS {{ it.cvss }}점 / 10점, {{ cv_label }}"><i></i></span>
+          <span class="fact__l">
+            {%- if it.cvss_source == "NVD" -%}NVD 공식 평가
+            {%- elsif it.cvss_source == "CNA" -%}제출 기관(CNA) 평가 · NVD 제공
+            {%- else -%}기사 기준 (NVD 미평가)
+            {%- endif -%}
+          </span>
+          {%- if it.cvss_vector != "" -%}<code class="vector" title="{{ it.cvss_vector | escape }}">{{ it.cvss_vector | escape }}</code>{%- endif -%}
+        </div>
+        {%- endif -%}
+        {%- if it.epss > 0 -%}
+        {%- assign top = 100 | minus: it.epss_percentile | round: 1 -%}
+        <div class="fact">
+          <span class="fact__k">EPSS {% include info.html key="epss" %}</span>
+          <b class="fact__v">{{ it.epss }}<small>%</small></b>
+          <span class="fact__l">30일 내 악용 확률 · 전체 CVE 중 상위 {{ top }}%{% if it.epss_date != "" %} · {{ it.epss_date | escape }} 기준{% endif %}</span>
+        </div>
+        {%- endif -%}
+        {%- if it.kev -%}
+        <div class="fact fact--kev">
+          <span class="fact__k">CISA KEV {% include info.html key="kev" %}</span>
+          <b class="fact__v fact__v--text">실제 악용 확인</b>
+          <span class="fact__l">{% if it.kev_date != "" %}{{ it.kev_date | escape }} 등재{% endif %}{% if it.kev_ransomware %} · 랜섬웨어 악용 사례 있음{% endif %}</span>
+        </div>
         {%- endif -%}
       </div>
       {%- endif -%}

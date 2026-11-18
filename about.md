@@ -34,7 +34,41 @@ permalink: /about/
   </li>
 </ol>
 
+<div class="prose about-sec" id="metrics">
+<h2>지표 읽는 법</h2>
+<p>브리핑의 숫자는 출처가 두 종류입니다. <b>공식 데이터</b>(CVE·CVSS·EPSS·KEV)는 매일 각 기관의 공개 API에서 직접 조회하고, <b>AI 평가</b>(위험도·위협 수준)는 기사를 읽은 AI의 판단이라 별도로 표시합니다.</p>
+</div>
+<div class="guide">
+  {%- assign metric_keys = "cve,cvss,epss,kev,severity,threat" | split: "," -%}
+  {%- for key in metric_keys -%}
+  {%- assign m = site.data.metrics[key] -%}
+  <div class="tcard" data-reveal>
+    <p class="tcard__t">{{ m.title | escape }}</p>
+    <p class="tcard__e">{{ m.sub | escape }}</p>
+    <p class="tcard__d">{{ m.body | escape }}</p>
+    {%- if key == "cvss" -%}
+    <div class="scale" aria-label="CVSS 등급 구간">
+      <span data-cvss="LOW">낮음<small>0.1–3.9</small></span>
+      <span data-cvss="MEDIUM">중간<small>4.0–6.9</small></span>
+      <span data-cvss="HIGH">높음<small>7.0–8.9</small></span>
+      <span data-cvss="CRITICAL">치명적<small>9.0–10</small></span>
+    </div>
+    {%- endif -%}
+  </div>
+  {%- endfor -%}
+</div>
 <div class="prose about-sec">
+<table>
+  <thead><tr><th>지표</th><th>출처</th><th>갱신</th></tr></thead>
+  <tbody>
+    <tr><td>CVE 존재 여부 · CVSS</td><td>미국 NIST <a href="https://nvd.nist.gov/" rel="noopener noreferrer">NVD API</a></td><td>발행 시점 조회</td></tr>
+    <tr><td>EPSS</td><td><a href="https://www.first.org/epss/" rel="noopener noreferrer">FIRST EPSS API</a></td><td>매일</td></tr>
+    <tr><td>KEV</td><td><a href="https://www.cisa.gov/known-exploited-vulnerabilities-catalog" rel="noopener noreferrer">CISA KEV 카탈로그</a></td><td>수시</td></tr>
+    <tr><td>위험도 · 위협 수준</td><td>Gemini (AI 평가, 공식 아님)</td><td>매일 09:00</td></tr>
+  </tbody>
+</table>
+<p>AI가 기사에서 고른 CVE 번호는 NVD에서 조회해 실제로 존재할 때만 표시합니다. NVD에 아직 없는 새 CVE는 기사 원문에 그대로 적혀 있을 때만 '미등록'으로 표시하고, 둘 다 아니면 버립니다.</p>
+
 <h2>보안 설계</h2>
 <p>이 사이트의 글은 외부 뉴스와 AI가 만든 <b>신뢰할 수 없는 입력</b>입니다. 그래서 다음을 지킵니다.</p>
 <table>

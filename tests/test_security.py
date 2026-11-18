@@ -95,13 +95,15 @@ class TemplateEscapeTest(unittest.TestCase):
 
     ROOT = Path(__file__).resolve().parent.parent
     # 숫자·날짜·내부 URL 등 생성 단계에서 검증되는 필드는 예외
-    SAFE_FIELDS = {"severity", "cvss", "issue_no", "threat_level", "date", "url", "size", "previous", "next", "index"}
+    SAFE_FIELDS = {"severity", "cvss", "issue_no", "threat_level", "date", "url", "size", "previous", "next", "index",
+                   "epss", "epss_percentile", "kev", "kev_ransomware"}
 
     def test_untrusted_fields_are_escaped(self):
-        files = list((self.ROOT / "_layouts").glob("*.html")) + [self.ROOT / "glossary.md"]
+        files = (list((self.ROOT / "_layouts").glob("*.html")) + list((self.ROOT / "_includes").glob("*.html"))
+                 + [self.ROOT / "glossary.md", self.ROOT / "about.md"])
         bad = []
         for f in files:
-            for m in re.finditer(r"\{\{-?\s*((?:it|t|p|latest|page)\.[\w.]+)([^}]*)\}\}", f.read_text(encoding="utf-8")):
+            for m in re.finditer(r"\{\{-?\s*((?:it|t|p|m|latest|page)\.[\w.]+)([^}]*)\}\}", f.read_text(encoding="utf-8")):
                 var, filters = m.group(1), m.group(2)
                 field = var.split(".")[1]
                 if field in self.SAFE_FIELDS or var.endswith(".size"):

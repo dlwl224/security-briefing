@@ -24,6 +24,12 @@ GitHub Actions (cron: 매일 00:00 UTC = 09:00 KST, 비용 0원)
  │    중요도 + 국내/해외 균형 + 취약점/사고/정책 분야 균형으로 5건
  │
  ├─ 3. 요약  선정 기사 본문을 가져와 핵심/배경/영향 + 용어 정리 (JSON 스키마로 출력)
+ │          위험도(1~5)는 AI 평가로 표시
+ │
+ ├─ 3.5 검증 briefing/enrich.py  (공식 데이터, 무료·키 불필요)
+ │    NVD API  → CVE 실존 확인 + 공식 CVSS (없는 번호는 버림)
+ │    FIRST EPSS → 30일 내 악용 확률
+ │    CISA KEV → 실제 악용 확인 여부
  │
  ├─ 4. 게시  briefing/render.py → _posts/*.md 커밋 → GitHub Pages(Jekyll) 자동 배포
  │
@@ -36,7 +42,9 @@ GitHub Actions (cron: 매일 00:00 UTC = 09:00 KST, 비용 0원)
 | `briefing/config.py` | 피드 목록, 수집 기간, 이슈 개수 등 설정 |
 | `briefing/collect.py` | RSS·CISA KEV 수집, 기사 본문 추출 |
 | `briefing/llm.py` | Gemini 호출 (이슈 선정 + 요약 프롬프트) |
+| `briefing/enrich.py` | NVD·EPSS·KEV 로 CVE 검증 및 공식 지표 보강 |
 | `briefing/render.py` | 마크다운 포스트·용어 사전 생성 |
+| `_data/metrics.yml` | CVE·CVSS·EPSS·KEV·위험도 설명 문구 (사이트 ⓘ 툴팁·About) |
 | `main.py` | 전체 파이프라인 실행 |
 | `notify.py` | Discord 알림 |
 | `.github/workflows/daily-briefing.yml` | 매일 9시 자동 실행 |

@@ -12,6 +12,8 @@
 | **악성 링크** | `javascript:` 링크 삽입 | `http(s)` URL만 허용 (`render.safe_url`) |
 | **템플릿/YAML 인젝션** | `{{ }}`, `{% %}` 또는 `---` 로 Jekyll·front matter 조작 | 중괄호를 HTML 엔티티로 치환, front matter 값은 JSON 문자열로 기록 |
 | **디스코드 악용** | AI 출력에 `@everyone`, 가짜 링크 | `allowed_mentions: none`, 디스코드 마크다운 이스케이프 |
+| **외부 API 응답 위조·오류** | NVD/EPSS/KEV 응답에 범위 밖 점수·스크립트 문자열 | 점수 범위(0~10, 0~1)·CVE/벡터/날짜 형식 검사 후 통과, 실패 시 지표 없이 게시 (`enrich.py`, `render.metrics`) |
+| **AI의 CVE 오기(환각)** | 존재하지 않는 CVE 번호를 사실처럼 게시 | NVD 조회로 실존 확인, 없으면 기사 원문에 있을 때만 '미등록' 표시, 둘 다 아니면 제외 |
 | **API 키 유출** | 코드·로그에 키 노출 | GitHub Secrets 사용, 키는 URL이 아닌 헤더로 전송(에러 로그에 안 찍힘) |
 | **공급망 공격** | 사용 중인 Action·라이브러리 변조 | Action은 커밋 SHA로 고정, 라이브러리 버전 고정, Dependabot 자동 업데이트 |
 | **과도한 권한** | 워크플로가 탈취되면 저장소 전체 조작 | `permissions: contents: write` 만 부여, PR로 실행되는 트리거 없음 |

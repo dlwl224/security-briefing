@@ -94,6 +94,38 @@ def normalize(entry: dict) -> dict:
     }
 
 
+def _pick(v, allowed: set, default: str = "") -> str:
+    return v if v in allowed else default
+
+
+def _bounded(v, lo: float, hi: float) -> float:
+    try:
+        f = float(v)
+    except (TypeError, ValueError):
+        return 0.0
+    return round(f, 2) if lo <= f <= hi else 0.0
+
+
+def metrics(e: dict) -> dict:
+    """공식 지표(NVD/EPSS/KEV) — enrich 단계에서 검증됐지만 여기서 한 번 더 형식을 강제한다."""
+    has_cve = bool(e["cve"])
+    vector = plain(e.get("cvss_vector"), 300)
+    date_ok = lambda s: s if DATE_RE.match(str(s or "")) else ""
+    return {
+        "cve_status": _pick(e.get("cve_status"), {"nvd", "pending"}) if has_cve else "",
+        "cvss_severity": _pick(str(e.get("cvss_severity", "")).upper(), {"LOW", "MEDIUM", "HIGH", "CRITICAL", "NONE"}),
+        "cvss_version": _pick(str(e.get("cvss_version", "")), {"2.0", "3.0", "3.1", "4.0"}),
+        "cvss_source": _pick(e.get("cvss_source"), {"NVD", "CNA", "기사"}),
+        "cvss_vector": vector if re.match(r"^[A-Za-z0-9:./()]{1,300}$", vector) else "",
+        "epss": _bounded(e.get("epss"), 0, 100) if has_cve else 0.0,
+        "epss_percentile": _bounded(e.get("epss_percentile"), 0, 100) if has_cve else 0.0,
+        "epss_date": date_ok(e.get("epss_date")) if has_cve else "",
+        "kev": bool(e.get("kev")) and has_cve,
+        "kev_date": date_ok(e.get("kev_date")) if has_cve else "",
+        "kev_ransomware": bool(e.get("kev_ransomware")) and has_cve,
+    }
+
+
 def structured_item(e: dict) -> dict:
     """레이아웃이 그릴 구조화 데이터 (모두 평문, 출력 시 escape)."""
     return {
@@ -110,6 +142,7 @@ def structured_item(e: dict) -> dict:
         "cvss": e["cvss"],
         "source": plain(e.get("source"), 50),
         "link": safe_url(e.get("link")),
+        **metrics(e),
     }
 
 

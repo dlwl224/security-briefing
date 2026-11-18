@@ -1,0 +1,3 @@
+{%- comment -%} 지표 설명 ⓘ 버튼. include.key: _data/metrics.yml 의 키 {%- endcomment -%}
+{%- assign m = site.data.metrics[include.key] -%}
+<button type="button" class="info" data-info="{{ include.key | escape }}" aria-describedby="term-tip" aria-expanded="false" aria-label="{{ m.title | escape }} 설명 보기">i</button>

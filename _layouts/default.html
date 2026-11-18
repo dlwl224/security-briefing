@@ -49,5 +49,7 @@
       <p class="footer__meta mono">Static · No trackers · CSP strict · Built with GitHub Actions</p>
     </div>
   </footer>
+  {%- comment -%} ⓘ 툴팁용 지표 설명 (실행되지 않는 JSON 데이터 블록) {%- endcomment %}
+  <script type="application/json" id="metrics-data">{{ site.data.metrics | jsonify | replace: "</", "<\/" }}</script>
 </body>
 </html>
