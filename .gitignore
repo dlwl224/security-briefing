@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+.briefing_out.json
+_site/
+.jekyll-cache/
+.venv/
+.env

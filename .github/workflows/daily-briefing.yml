@@ -1,0 +1,57 @@
+name: Daily Security Briefing
+
+on:
+  schedule:
+    - cron: "0 0 * * *"   # 매일 00:00 UTC = 오전 9시 KST
+  workflow_dispatch:       # Actions 탭에서 수동 실행 (테스트용)
+
+permissions:
+  contents: write
+
+concurrency:
+  group: daily-briefing
+  cancel-in-progress: false
+
+jobs:
+  briefing:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Generate briefing
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}   # 선택 사항: 비우면 자동 선택
+        run: python main.py
+
+      - name: Commit & push
+        run: |
+          git config user.name "security-briefing-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add _posts _data data
+          if git diff --cached --quiet; then
+            echo "변경 없음"
+          else
+            git commit -m "📰 $(TZ=Asia/Seoul date +%F) 보안 이슈 브리핑"
+            git push
+          fi
+
+      - name: Notify Discord
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: python notify.py
+
+      - name: Notify failure
+        if: failure()
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: python notify.py --failed

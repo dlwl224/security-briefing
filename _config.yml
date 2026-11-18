@@ -1,0 +1,26 @@
+title: "🔐 Daily Security Briefing"
+description: "매일 오전 9시, 국내·해외 주요 보안 이슈 5건을 핵심·배경·영향으로 정리합니다."
+lang: ko
+theme: minima
+timezone: Asia/Seoul
+permalink: /briefing/:year-:month-:day/
+
+minima:
+  skin: auto
+
+header_pages:
+  - glossary.md
+  - about.md
+
+plugins:
+  - jekyll-feed
+  - jekyll-seo-tag
+
+exclude:
+  - briefing/
+  - data/
+  - main.py
+  - notify.py
+  - requirements.txt
+  - README.md
+  - .github/
