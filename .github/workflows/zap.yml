@@ -1,0 +1,45 @@
+name: DAST (OWASP ZAP)
+
+on:
+  schedule:
+    - cron: "0 19 * * 0"
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [".github/workflows/zap.yml", ".zap/**"]
+  pull_request:
+    branches: [main]
+    paths: [".github/workflows/zap.yml", ".zap/**"]
+
+permissions: {}
+
+concurrency:
+  group: zap
+  cancel-in-progress: true
+
+jobs:
+  baseline:
+    name: ZAP baseline scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: ZAP baseline
+        uses: zaproxy/action-baseline@de8ad967d3548d44ef623df22cf95c3b0baf8b25  # v0.15.0
+        with:
+          target: "https://dlwl224.github.io/security-briefing/"
+          rules_file_name: ".zap/rules.tsv"
+          cmd_options: "-a -I"
+          allow_issue_writing: false
+          fail_action: true
+          artifact_name: "zap-report"
+
+      - name: Summary
+        if: always()
+        run: |
+          if [ -f report_md.md ]; then cat report_md.md >> "$GITHUB_STEP_SUMMARY"; fi

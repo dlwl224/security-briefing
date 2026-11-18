@@ -19,6 +19,8 @@
 | A04 | 안전하지 않은 설계 | 프롬프트 인젝션, AI 환각, 클릭재킹 | 기사 본문은 '데이터'로 취급하도록 지시, AI 가 쓴 CVE 는 NVD 로 실존 검증, AI 판단에는 'AI 평가' 라벨, iframe 삽입 차단 | `test_enrich.py` |
 | A05 | 보안 설정 오류 | 외부 스크립트·CDN, 과도한 노출 | 외부 스크립트/폰트 0개, 엄격한 CSP, `referrer` 정책, 불필요한 파일은 사이트 빌드에서 제외(`_config.yml` exclude) | 브라우저 콘솔 CSP 위반 0건 |
 | A06 | 취약한 구성요소 | 라이브러리·Action 의 알려진 CVE | 버전 고정, Dependabot(pip + Actions), **pip-audit** 주간 검사 | `codeql.yml` |
+| A08 | 무결성 실패 (패키지 바꿔치기) | 같은 버전 이름으로 변조된 패키지가 설치됨 | 모든 의존성(간접 포함)을 **sha256 해시로 고정**, `pip install --require-hashes` — 해시가 다르면 설치 거부 | `requirements*.txt` |
+| — | **DAST (동적 점검)** | 코드 검사로 못 찾는, 실제 배포된 사이트의 문제 | **OWASP ZAP baseline** 이 매주 실제 사이트를 점검 (외부 스크립트·의심 주석·민감정보 노출은 FAIL, 정적 호스팅이라 못 고치는 헤더 항목은 WARN) | `zap.yml`, `.zap/rules.tsv` |
 | A07 | 인증 실패 | 사이트에 로그인 없음 → 해당 없음. GitHub 계정 탈취가 실질 위험 | 2FA, Secret scanning / Push protection (아래 체크리스트) | — |
 | A08 | 무결성 실패 | 변조된 Action·의존성, 검증 안 된 데이터 | Action 을 **커밋 SHA 로 고정**, 외부 API 값은 형식·범위 검사 후 사용 | `test_enrich.py` |
 | A09 | 로깅·모니터링 실패 | 실패를 모르고 지나침 | 실패 시 Discord 알림, Actions 로그, CodeQL 결과는 Security 탭 | — |

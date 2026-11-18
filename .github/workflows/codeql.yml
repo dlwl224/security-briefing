@@ -3,7 +3,7 @@ name: Security Scan
 on:
   push:
     branches: [main]
-    paths: ["**.py", "**.js", "**.html", ".github/workflows/**", "requirements.txt"]
+    paths: ["**.py", "**.js", "**.html", ".github/workflows/**", "requirements*.txt"]
   pull_request:
     branches: [main]
   schedule:
@@ -49,5 +49,6 @@ jobs:
           python-version: "3.12"
       - name: pip-audit (알려진 취약 라이브러리 검사)
         run: |
-          pip install pip-audit==2.10.1
+          pip install --require-hashes -r requirements-dev.txt
           pip-audit -r requirements.txt --strict
+          pip-audit -r requirements-dev.txt --strict
