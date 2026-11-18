@@ -4,6 +4,15 @@
  */
 (() => {
   "use strict";
+
+  /* ---------- 0. 클릭재킹 방어 (OWASP A04/A05) ----------
+   * GitHub Pages 는 X-Frame-Options / CSP frame-ancestors 헤더를 설정할 수 없어서,
+   * 다른 사이트가 이 페이지를 투명 iframe 으로 덮어씌우지 못하게 JS 로 막는다. */
+  if (window.top !== window.self) {
+    document.documentElement.style.display = "none";
+    try { window.top.location.replace(window.self.location.href); } catch { /* 교차 출처면 그냥 숨김 유지 */ }
+    return;
+  }
   const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));

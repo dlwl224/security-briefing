@@ -5,8 +5,8 @@ on:
     - cron: "0 0 * * *"   # 매일 00:00 UTC = 오전 9시 KST
   workflow_dispatch:       # Actions 탭에서 수동 실행 (테스트용)
 
-permissions:
-  contents: write
+# 최소 권한 원칙 (OWASP A01/A08): 기본은 권한 없음, 필요한 job 에만 부여
+permissions: {}
 
 concurrency:
   group: daily-briefing
@@ -15,7 +15,9 @@ concurrency:
 jobs:
   briefing:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
+    permissions:
+      contents: write     # 브리핑 글 커밋용 (이 외 권한 없음)
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1 (태그 대신 커밋 SHA로 고정: 공급망 공격 방지)
 

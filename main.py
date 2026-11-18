@@ -9,7 +9,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-from briefing import collect, config, enrich, render
+from briefing import collect, config, enrich, refresh, render
 
 ROOT = Path(__file__).resolve().parent
 SEEN = ROOT / "data" / "seen.json"
@@ -20,6 +20,10 @@ def main() -> int:
     dry = "--dry-run" in sys.argv
     date = datetime.now(config.KST).strftime("%Y-%m-%d")
     seen = json.loads(SEEN.read_text(encoding="utf-8")) if SEEN.exists() else []
+
+    if not dry:
+        # 최근 2주 글의 CVSS·EPSS·KEV 를 공식 데이터로 다시 조회 (NVD 분석 완료, EPSS 일일 변동 반영)
+        refresh.refresh_recent(date)
 
     candidates = collect.collect_candidates(set(seen))
     print(f"[info] 후보 {len(candidates)}건")

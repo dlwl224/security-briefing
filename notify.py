@@ -30,8 +30,15 @@ def send(payload: dict) -> None:
         print("[warn] DISCORD_WEBHOOK_URL 없음 — 보낼 내용만 출력")
         print(json.dumps(payload, ensure_ascii=False, indent=2))
         return
-    r = requests.post(WEBHOOK, json=payload, timeout=30)
-    r.raise_for_status()
+    if not WEBHOOK.startswith(("https://discord.com/api/webhooks/", "https://discordapp.com/api/webhooks/")):
+        raise SystemExit("[error] DISCORD_WEBHOOK_URL 형식이 디스코드 웹후크가 아님")
+    # 웹후크 URL 자체가 비밀값이므로, 오류 메시지·로그에 URL 이 찍히지 않게 상태 코드만 남긴다
+    try:
+        r = requests.post(WEBHOOK, json=payload, timeout=30, allow_redirects=False)
+    except requests.RequestException as e:
+        raise SystemExit(f"[error] 디스코드 전송 실패: {type(e).__name__}") from None
+    if not 200 <= r.status_code < 300:
+        raise SystemExit(f"[error] 디스코드 전송 실패: HTTP {r.status_code}")
     print("[info] 디스코드 알림 전송 완료")
 
 

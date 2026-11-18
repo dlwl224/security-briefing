@@ -7,6 +7,7 @@
 보안 메모: 외부 API 응답도 '신뢰할 수 없는 입력'이다.
 형식·범위를 검사한 값만 통과시키고, 장애 시에는 해당 정보 없이 진행한다(게시를 막지 않음).
 """
+import json
 import os
 import re
 import time
@@ -14,6 +15,7 @@ import time
 import requests
 
 from . import config
+from .netsafe import safe_get
 
 CVE_RE = re.compile(r"\bCVE-\d{4}-\d{4,7}\b", re.I)
 VECTOR_RE = re.compile(r"^[A-Za-z0-9:./()]{1,300}$")
@@ -95,24 +97,28 @@ def parse_epss(data: dict) -> dict | None:
     }
 
 
-def _get_json(url: str, params: dict) -> dict | None:
+def _get_json(url: str, params: dict, max_bytes: int = 2_000_000) -> dict | None:
+    """성공하면 dict, 장애·한도 초과·형식 오류면 None (None 과 '결과 없음'을 구분하기 위함)."""
     for attempt in range(3):
         try:
-            r = session.get(url, params=params, timeout=20)
-            if r.status_code in (403, 429, 503):           # NVD 호출 한도
+            body, _ = safe_get(session, url, params=params, max_bytes=max_bytes)
+            data = json.loads(body)
+            return data if isinstance(data, dict) else None
+        except requests.HTTPError as e:
+            code = e.response.status_code if e.response is not None else 0
+            if code in (403, 429, 503):                     # NVD 호출 한도
                 time.sleep(7 * (attempt + 1))
                 continue
-            if r.status_code != 200 or len(r.content) > 2_000_000:
-                return None
-            return r.json()
+            print(f"[warn] {url} 조회 실패: HTTP {code}")
+            return None
         except (requests.RequestException, ValueError) as e:
-            print(f"[warn] {url} 조회 실패: {e}")
+            print(f"[warn] {url} 조회 실패: {type(e).__name__}")
             time.sleep(3)
     return None
 
 
 def load_kev() -> dict[str, dict]:
-    data = _get_json(config.CISA_KEV_URL, {}) or {}
+    data = _get_json(config.CISA_KEV_URL, {}, max_bytes=15_000_000) or {}
     out = {}
     for v in data.get("vulnerabilities", []) if isinstance(data, dict) else []:
         cid = str(v.get("cveID", "")).upper()
@@ -134,22 +140,37 @@ def candidate_cve(entry: dict, article_text: str) -> str:
     return found[0].upper() if found else ""
 
 
-def enrich(entries: list[dict], texts: list[str]) -> None:
-    """entries 를 제자리에서 보강한다. texts[i] 는 entries[i] 의 기사 본문."""
+def enrich(entries: list[dict], texts: list[str], refresh: bool = False) -> int:
+    """entries 를 제자리에서 보강한다. texts[i] 는 entries[i] 의 기사 본문.
+
+    refresh=True: 이미 발행된 글을 다시 조회하는 모드. NVD 장애로 응답을 못 받으면
+    기존 값을 그대로 둔다 (장애 때문에 멀쩡한 CVE 가 지워지는 일을 막음).
+    돌려주는 값: 실제로 갱신한 항목 수.
+    """
     kev = load_kev()
-    first = True
+    first, changed = True, 0
     for e, text in zip(entries, texts):
         cid = candidate_cve(e, text)
-        e.update({"cve": "", "cve_status": "", "kev": False})
-        ai_cvss = _num(e.get("cvss"), 0.1, 10)
-        e["cvss"] = 0
         if not cid:
+            if not refresh:
+                e.update({"cve": "", "cve_status": "", "kev": False, "cvss": 0})
             continue
         if not first:
             time.sleep(6)                                   # NVD 무키 한도: 30초에 5회
         first = False
-        nvd = parse_nvd(_get_json(NVD_URL, {"cveId": cid}) or {})
+        raw = _get_json(NVD_URL, {"cveId": cid})
+        if raw is None and refresh:
+            print(f"[warn] {cid}: NVD 응답 없음 → 기존 값 유지")
+            continue
+        before = {k: e.get(k) for k in ("cve", "cve_status", "cvss", "cvss_source", "epss", "kev")}
+        ai_cvss = _num(e.get("cvss"), 0.1, 10) if e.get("cvss_source", "기사") in ("기사", "", None) else None
+        e.update({"cve": "", "cve_status": "", "kev": False, "cvss": 0})
+        nvd = parse_nvd(raw or {})
         in_article = cid in (text or "").upper()
+        if nvd and nvd.get("status", "").lower() == "rejected":
+            print(f"[warn] {cid}: NVD 에서 거부(Rejected)된 번호 → 제외")
+            changed += before["cve"] != ""
+            continue
         if nvd:
             e.update(nvd)
             e["cve"], e["cve_status"] = cid, "nvd"
@@ -158,6 +179,7 @@ def enrich(entries: list[dict], texts: list[str]) -> None:
             e["cve"], e["cve_status"] = cid, "pending"
         else:
             print(f"[warn] {cid}: NVD 에도 기사에도 없음 → AI 오기로 보고 제외")
+            changed += before["cve"] != ""
             continue
         if not e.get("cvss") and ai_cvss and in_article:
             e.update({"cvss": round(ai_cvss, 1), "cvss_severity": cvss_band(ai_cvss), "cvss_source": "기사", "cvss_version": ""})
@@ -167,4 +189,7 @@ def enrich(entries: list[dict], texts: list[str]) -> None:
         if cid in kev:
             e["kev"] = True
             e.update(kev[cid])
+        if before != {k: e.get(k) for k in before}:
+            changed += 1
         print(f"[info] {cid}: {e['cve_status']} CVSS={e.get('cvss')} EPSS={e.get('epss')} KEV={e['kev']}")
+    return changed

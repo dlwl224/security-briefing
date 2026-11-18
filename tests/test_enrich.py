@@ -51,7 +51,7 @@ class ParseTest(unittest.TestCase):
 
 class EnrichFlowTest(unittest.TestCase):
     def run_enrich(self, entry, text, nvd_resp):
-        def fake_get(url, params):
+        def fake_get(url, params, **kwargs):
             if "nvd" in url:
                 return nvd_resp
             if "first.org" in url:

@@ -1,5 +1,6 @@
 """RSS/CISA KEV에서 후보 기사를 모으고, 선택된 기사의 본문을 가져온다."""
 import calendar
+import json
 import re
 from datetime import datetime, timedelta, timezone
 
@@ -8,8 +9,11 @@ import requests
 from bs4 import BeautifulSoup
 
 from . import config
+from .netsafe import safe_get
 
 MAX_PAGE_BYTES = 3_000_000
+MAX_FEED_BYTES = 5_000_000      # RSS 는 보통 수백 KB. 거대 XML(엔티티 폭탄 등) 방어용 상한
+MAX_KEV_BYTES = 15_000_000
 
 session = requests.Session()
 session.headers["User-Agent"] = config.USER_AGENT
@@ -33,9 +37,8 @@ def collect_rss(since: datetime, seen: set[str]) -> list[dict]:
     items = []
     for feed in config.RSS_FEEDS:
         try:
-            resp = session.get(feed["url"], timeout=20)
-            resp.raise_for_status()
-            parsed = feedparser.parse(resp.content)
+            body, _ = safe_get(session, feed["url"], max_bytes=MAX_FEED_BYTES)
+            parsed = feedparser.parse(body)
         except Exception as e:  # 한 소스가 죽어도 나머지는 계속
             print(f"[warn] {feed['name']} 수집 실패: {e}")
             continue
@@ -64,16 +67,21 @@ def collect_rss(since: datetime, seen: set[str]) -> list[dict]:
 
 def collect_kev(since: datetime, seen: set[str]) -> list[dict]:
     try:
-        data = session.get(config.CISA_KEV_URL, timeout=30).json()
+        body, _ = safe_get(session, config.CISA_KEV_URL, max_bytes=MAX_KEV_BYTES, timeout=30)
+        data = json.loads(body)
+        if not isinstance(data, dict):
+            raise ValueError("KEV 형식 오류")
     except Exception as e:
         print(f"[warn] CISA KEV 수집 실패: {e}")
         return []
     since_date = (since - timedelta(days=1)).date().isoformat()
     items = []
     for v in data.get("vulnerabilities", []):
-        if v.get("dateAdded", "") < since_date:
+        if not isinstance(v, dict) or str(v.get("dateAdded", "")) < since_date:
             continue
-        cve = v["cveID"]
+        cve = str(v.get("cveID", "")).upper()
+        if not re.fullmatch(r"CVE-\d{4}-\d{4,7}", cve):
+            continue
         link = f"https://nvd.nist.gov/vuln/detail/{cve}"
         if link in seen:
             continue
@@ -118,14 +126,11 @@ def fetch_article_text(item: dict) -> str:
             f"랜섬웨어 악용 여부: {v.get('knownRansomwareCampaignUse')}\nCWE: {', '.join(v.get('cwes', []))}"
         )
     try:
-        if not item["link"].startswith(("http://", "https://")):
+        # SSRF 방어 + 크기 제한 (netsafe.safe_get)
+        raw, resp = safe_get(session, item["link"], max_bytes=MAX_PAGE_BYTES)
+        if "html" not in resp.headers.get("Content-Type", "html"):
             return item["snippet"]
-        with session.get(item["link"], timeout=20, stream=True) as resp:
-            resp.raise_for_status()
-            if "html" not in resp.headers.get("Content-Type", "html"):
-                return item["snippet"]
-            raw = resp.raw.read(MAX_PAGE_BYTES, decode_content=True)  # 너무 큰 응답으로 인한 메모리 고갈 방지
-            enc = resp.encoding if resp.encoding not in (None, "ISO-8859-1") else None
+        enc = resp.encoding if resp.encoding not in (None, "ISO-8859-1") else None
         soup = BeautifulSoup(raw, "html.parser", from_encoding=enc)
         for tag in soup(["script", "style", "nav", "header", "footer", "aside", "form"]):
             tag.decompose()

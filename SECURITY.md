@@ -1,8 +1,41 @@
 # 🛡️ 보안 설계와 사고 대응
 
-## 위협 모델
+## 공격면 (Attack Surface)
 
-이 블로그는 **서버·DB·로그인이 없는 정적 사이트**(GitHub Pages)라서 웹 서버 해킹이나 SQL 인젝션 같은 공격면이 없습니다.
+| 구성 요소 | 외부에 노출? | 비고 |
+|---|---|---|
+| 블로그 (GitHub Pages) | ✅ 공개 | **정적 HTML만** 존재. 서버 코드·DB·로그인·폼·파일 업로드 없음 |
+| 자동화 (GitHub Actions) | ❌ | 매일 1회 실행되는 임시 러너. 외부에서 호출 불가 (`schedule`/수동 실행만) |
+| 비밀값 (Gemini 키, Discord 웹후크) | ❌ | GitHub Secrets 에만 저장, 해당 단계에서만 환경변수로 전달 |
+| **신뢰할 수 없는 입력** | — | RSS 기사, 기사 본문 HTML, AI 출력, NVD/EPSS/KEV 응답 → 모두 검증·이스케이프 후 사용 |
+
+## OWASP Top 10 (2021) 대응표
+
+| # | 항목 | 이 프로젝트에서의 의미 | 대응 | 검증 |
+|---|---|---|---|---|
+| A01 | 접근 통제 실패 | 저장소·워크플로 권한 남용 | 워크플로 기본 권한 `{}`, 필요한 job 에만 `contents: write`. 브랜치 보호(강제 push·삭제 금지) | 워크플로 파일 |
+| A02 | 암호화 실패 | 평문 전송, 비밀값 노출 | 모든 외부 요청 HTTPS, GitHub Pages HTTPS 강제, CSP `upgrade-insecure-requests`. 비밀값은 Secrets, URL·로그에 안 남김 | `notify.py` 오류 메시지에 웹후크 URL 미포함 |
+| A03 | 인젝션 (SQLi·XSS·템플릿) | **SQL**: DB 없음 → 해당 없음. **XSS**: RSS/AI 텍스트에 스크립트. **템플릿**: Liquid·YAML 조작 | 출력 시 HTML 이스케이프, 마크다운 링크 무력화, Liquid `{{ }}` 치환, front matter 는 JSON 으로 기록, JS 는 `textContent` 만 사용 (`innerHTML` 미사용), CSP `script-src 'self'` | `test_security.py` (악성 입력, 템플릿 escape 정적 검사), CodeQL |
+| A04 | 안전하지 않은 설계 | 프롬프트 인젝션, AI 환각, 클릭재킹 | 기사 본문은 '데이터'로 취급하도록 지시, AI 가 쓴 CVE 는 NVD 로 실존 검증, AI 판단에는 'AI 평가' 라벨, iframe 삽입 차단 | `test_enrich.py` |
+| A05 | 보안 설정 오류 | 외부 스크립트·CDN, 과도한 노출 | 외부 스크립트/폰트 0개, 엄격한 CSP, `referrer` 정책, 불필요한 파일은 사이트 빌드에서 제외(`_config.yml` exclude) | 브라우저 콘솔 CSP 위반 0건 |
+| A06 | 취약한 구성요소 | 라이브러리·Action 의 알려진 CVE | 버전 고정, Dependabot(pip + Actions), **pip-audit** 주간 검사 | `codeql.yml` |
+| A07 | 인증 실패 | 사이트에 로그인 없음 → 해당 없음. GitHub 계정 탈취가 실질 위험 | 2FA, Secret scanning / Push protection (아래 체크리스트) | — |
+| A08 | 무결성 실패 | 변조된 Action·의존성, 검증 안 된 데이터 | Action 을 **커밋 SHA 로 고정**, 외부 API 값은 형식·범위 검사 후 사용 | `test_enrich.py` |
+| A09 | 로깅·모니터링 실패 | 실패를 모르고 지나침 | 실패 시 Discord 알림, Actions 로그, CodeQL 결과는 Security 탭 | — |
+| A10 | **SSRF** | 악성 RSS 링크가 `169.254.169.254`·`localhost` 등 내부 주소를 가리킴 | `netsafe.safe_get`: http(s)·80/443 만, **공인 IP 만 허용**, 리다이렉트도 매 단계 재검사, 응답 크기 제한 | `test_netsafe.py` |
+
+### 파일 관련 취약점
+- **파일 업로드**: 기능 없음 → 웹셸 업로드 같은 공격 불가.
+- **경로 조작(Path Traversal)**: 파일을 쓰는 곳은 `_posts/<날짜>-security-briefing.md` 하나뿐이며 날짜는 `YYYY-MM-DD` 정규식을 통과해야 함 (`../` 차단, `test_bad_date_rejected`).
+- **XML 공격(XXE·엔티티 폭탄)**: RSS 는 크기 상한(5MB) 안에서만 파싱, feedparser 는 외부 엔티티를 불러오지 않음.
+- **커밋 범위 제한**: 봇은 `_posts`, `_data`, `data` 만 `git add` 하므로 워크플로·코드 파일을 바꿀 수 없음.
+
+### 정적 사이트라서 생기는 한계 (솔직하게)
+- GitHub Pages 는 응답 **헤더를 설정할 수 없음** → `X-Frame-Options`, `frame-ancestors` 대신 JS 로 iframe 삽입을 막고, CSP 는 `<meta>` 로 적용.
+- SSRF 방어는 DNS 확인 후 실제 연결 사이의 **DNS rebinding** 까지 완전히 막지는 못함 (러너가 일회용이라 영향 제한적).
+
+## 위협 모델 (세부)
+
 현실적인 위협과 대응은 다음과 같습니다.
 
 | 위협 | 시나리오 | 대응 |
@@ -16,10 +49,10 @@
 | **AI의 CVE 오기(환각)** | 존재하지 않는 CVE 번호를 사실처럼 게시 | NVD 조회로 실존 확인, 없으면 기사 원문에 있을 때만 '미등록' 표시, 둘 다 아니면 제외 |
 | **API 키 유출** | 코드·로그에 키 노출 | GitHub Secrets 사용, 키는 URL이 아닌 헤더로 전송(에러 로그에 안 찍힘) |
 | **공급망 공격** | 사용 중인 Action·라이브러리 변조 | Action은 커밋 SHA로 고정, 라이브러리 버전 고정, Dependabot 자동 업데이트 |
-| **과도한 권한** | 워크플로가 탈취되면 저장소 전체 조작 | `permissions: contents: write` 만 부여, PR로 실행되는 트리거 없음 |
+| **과도한 권한** | 워크플로가 탈취되면 저장소 전체 조작 | 기본 권한 없음, 브리핑 job 에만 `contents: write`, PR 로 실행되는 쓰기 트리거 없음 |
 | **자원 고갈** | 거대한 응답으로 메모리 고갈 | 기사 다운로드 3MB 제한, 타임아웃, 워크플로 20분 제한 |
 
-보안 테스트(`tests/test_security.py`)는 매일 실행 전에 자동으로 돌아가며, 실패하면 게시하지 않습니다.
+보안 테스트(`tests/`, 26개)는 매일 실행 전에 자동으로 돌아가며, 실패하면 게시하지 않습니다. 코드가 바뀌거나 매주 한 번 CodeQL·pip-audit 이 추가로 검사합니다.
 
 ## 계정 보안 체크리스트 (직접 설정)
 

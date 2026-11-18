@@ -61,9 +61,9 @@ permalink: /about/
 <table>
   <thead><tr><th>지표</th><th>출처</th><th>갱신</th></tr></thead>
   <tbody>
-    <tr><td>CVE 존재 여부 · CVSS</td><td>미국 NIST <a href="https://nvd.nist.gov/" rel="noopener noreferrer">NVD API</a></td><td>발행 시점 조회</td></tr>
-    <tr><td>EPSS</td><td><a href="https://www.first.org/epss/" rel="noopener noreferrer">FIRST EPSS API</a></td><td>매일</td></tr>
-    <tr><td>KEV</td><td><a href="https://www.cisa.gov/known-exploited-vulnerabilities-catalog" rel="noopener noreferrer">CISA KEV 카탈로그</a></td><td>수시</td></tr>
+    <tr><td>CVE 존재 여부 · CVSS</td><td>미국 NIST <a href="https://nvd.nist.gov/" rel="noopener noreferrer">NVD API</a></td><td>발행 시 + 이후 14일간 매일 재조회</td></tr>
+    <tr><td>EPSS</td><td><a href="https://www.first.org/epss/" rel="noopener noreferrer">FIRST EPSS API</a></td><td>매일 (발행 후 14일간 갱신)</td></tr>
+    <tr><td>KEV</td><td><a href="https://www.cisa.gov/known-exploited-vulnerabilities-catalog" rel="noopener noreferrer">CISA KEV 카탈로그</a></td><td>매일 (발행 후 14일간 갱신)</td></tr>
     <tr><td>위험도 · 위협 수준</td><td>Gemini (AI 평가, 공식 아님)</td><td>매일 09:00</td></tr>
   </tbody>
 </table>
