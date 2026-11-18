@@ -87,7 +87,7 @@ docs/                     문서 (사이트에 나가지 않음)
 | 함수 | 한 함수는 한 가지 일. 50줄이 넘으면 나눌 수 있는지 본다. `lambda` 를 변수에 담지 않는다 |
 | 예외 | `except Exception: pass` 금지. 잡을 예외를 좁히고, 무시할 때는 이유를 주석으로 |
 | 출력 | 로그는 `print("[info] ...")` / `[warn]` / `[error]` 접두어. **비밀값·URL 의 토큰은 절대 출력하지 않는다** |
-| 의존성 | `requirements.txt` 에 버전 고정(`==`). 새 라이브러리는 꼭 필요할 때만 (Dependabot·pip-audit 대상) |
+| 의존성 | 직접 쓰는 라이브러리는 `requirements.in`(개발 도구는 `requirements-dev.in`)에 `==` 로 적고, `pip-compile --generate-hashes` 로 **해시까지 고정된** `requirements*.txt` 를 만든다. 설치는 항상 `pip install --require-hashes`. 새 라이브러리는 꼭 필요할 때만 |
 
 ---
 
@@ -152,8 +152,10 @@ docs/                     문서 (사이트에 나가지 않음)
 ## 7. 로컬에서 확인하기
 
 ```bash
-pip install -r requirements.txt ruff==0.17.5
+pip install --require-hashes -r requirements.txt -r requirements-dev.txt
 ruff check . && ruff format --check .        # 코드 규칙
 python -m unittest discover tests            # 테스트 (네트워크 없이)
 python -m briefing daily --dry-run           # AI 없이 수집·글 생성 시험 (만들어진 파일은 커밋하지 않기)
+pip-compile --generate-hashes requirements.in            # 라이브러리 버전을 바꿨을 때 (pip install pip-tools)
+pip-compile --generate-hashes --allow-unsafe requirements-dev.in
 ```
