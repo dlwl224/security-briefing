@@ -9,7 +9,6 @@ import requests
 from . import consulting
 
 API = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
-# 앞의 모델이 없거나 한도 초과면 다음 모델로 시도
 MODELS = [
     m for m in [os.getenv("GEMINI_MODEL"), "gemini-flash-latest", "gemini-2.5-flash", "gemini-flash-lite-latest"] if m
 ]
@@ -28,8 +27,9 @@ def _call(prompt: str, schema: dict) -> dict:
     last_err = None
     for model in MODELS:
         for attempt in range(3):
-            # 키는 URL(?key=)이 아닌 헤더로 보낸다 → 에러 메시지·로그에 URL이 찍혀도 키가 새지 않음
-            r = requests.post(API.format(model=model), headers={"x-goog-api-key": key}, json=body, timeout=120)
+            r = requests.post(
+                API.format(model=model), headers={"x-goog-api-key": key}, json=body, timeout=120, allow_redirects=False
+            )
             if r.status_code == 200:
                 text = r.json()["candidates"][0]["content"]["parts"][0]["text"]
                 print(f"[info] Gemini 모델 사용: {model}")
@@ -38,7 +38,7 @@ def _call(prompt: str, schema: dict) -> dict:
             if r.status_code in (429, 500, 503):
                 time.sleep(20 * (attempt + 1))
                 continue
-            break  # 404 등은 다음 모델로
+            break
         print(f"[warn] {last_err}")
     raise RuntimeError(f"Gemini 호출 실패: {last_err}")
 

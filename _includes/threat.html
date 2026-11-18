@@ -1,4 +1,3 @@
-{%- comment -%} 위협 수준 미터. include.level: 1~5 (그날 5건의 AI 평가 위험도 평균) {%- endcomment -%}
 {%- assign lv = include.level | default: 1 | plus: 0 -%}
 {%- case lv -%}
   {%- when 5 -%}{%- assign label = "심각" -%}{%- assign en = "CRITICAL" -%}

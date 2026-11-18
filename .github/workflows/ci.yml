@@ -1,7 +1,5 @@
 name: CI
 
-# PR 을 올리거나 main 에 코드가 들어올 때: 코드 규칙(ruff) + 테스트.
-# 둘 다 통과해야 머지하는 것을 원칙으로 한다 (docs/CONVENTIONS.md).
 on:
   pull_request:
     branches: [main]
@@ -9,7 +7,6 @@ on:
     branches: [main]
     paths: ["**.py", "pyproject.toml", "requirements.txt", "_layouts/**", "_includes/**", "_data/*.json", ".github/workflows/**"]
 
-# pull_request(포크 PR 포함)는 읽기 권한만으로 실행 — 비밀값을 쓰지 않는다
 permissions: {}
 
 concurrency:

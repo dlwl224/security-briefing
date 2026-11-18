@@ -1,12 +1,4 @@
-"""요약 결과를 Jekyll 포스트(마크다운)와 용어 사전 데이터로 만든다.
-
-보안 메모: 글 내용은 외부 RSS와 AI 출력에서 오므로 '신뢰할 수 없는 입력'으로 취급한다.
-- HTML 이스케이프 → <script> 등 저장형 XSS 차단
-- 마크다운 링크/이미지 문법 무력화 → 프롬프트 인젝션으로 피싱 링크가 삽입되는 것 차단
-- Liquid 문법 무력화 → Jekyll 템플릿 인젝션/빌드 실패 차단
-- 링크는 http(s)만 허용 → javascript: 링크 차단
-- front matter 값은 JSON 문자열로 써서 YAML 인젝션 차단
-"""
+"""요약 결과를 Jekyll 포스트(마크다운)와 용어 사전 데이터로 만든다."""
 
 import html
 import json
@@ -31,12 +23,12 @@ MD_SPECIAL = re.compile(r"([\\`*_\[\]|!#~])")
 def safe_text(s: object, max_len: int = 2000, single_line: bool = False) -> str:
     """신뢰할 수 없는 문자열을 마크다운 본문에 안전하게 넣을 수 있게 만든다."""
     s = str(s or "")
-    s = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]", "", s)  # 제어문자 제거
+    s = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]", "", s)
     s = re.sub(r"\s+", " ", s) if single_line else re.sub(r"\n{2,}", "\n", s)
     s = s.strip()[:max_len]
-    s = MD_SPECIAL.sub(r"\\\1", s)  # 마크다운 문법 무력화 (링크·이미지·강조 등)
-    s = html.escape(s, quote=False)  # < > & → HTML 태그 삽입 차단
-    s = s.replace("{", "&#123;").replace("}", "&#125;")  # Liquid 무력화
+    s = MD_SPECIAL.sub(r"\\\1", s)
+    s = html.escape(s, quote=False)
+    s = s.replace("{", "&#123;").replace("}", "&#125;")
     return s.replace("\n", "  \n")
 
 
@@ -63,7 +55,6 @@ def site_url() -> str:
 
 
 def post_path(date: str) -> str:
-    # _config.yml 의 permalink(/briefing/:year-:month-:day/)와 맞춰야 한다
     return f"/briefing/{date}/"
 
 
@@ -71,8 +62,7 @@ CVE_RE = re.compile(r"^CVE-\d{4}-\d{4,7}$")
 
 
 def plain(s: object, max_len: int) -> str:
-    """front matter 용 평문: 제어문자 제거 + 공백 정리 + 길이 제한.
-    HTML 이스케이프는 하지 않는다 — 레이아웃에서 반드시 `| escape` 로 출력한다."""
+    """front matter 용 평문: 제어문자 제거 + 공백 정리 + 길이 제한."""
     s = re.sub(r"[\x00-\x1f\x7f]", " ", str(s or ""))
     return re.sub(r"\s+", " ", s).strip()[:max_len]
 
@@ -95,7 +85,6 @@ def normalize(entry: dict) -> dict:
         "severity": severity,
         "cvss": cvss,
         "cve": cve if CVE_RE.match(cve) else "",
-        # 위험도 판정 요소 (AI 판정 → 허용 값만)
         "exploitation": _pick(entry.get("exploitation"), set(consulting.EXPLOIT)),
         "scale": _pick(entry.get("scale"), set(consulting.SCALE)),
         "domestic": entry.get("domestic") is True,
@@ -103,7 +92,7 @@ def normalize(entry: dict) -> dict:
         "factor_note": plain(entry.get("factor_note"), 80),
     }
     base["kev"] = bool(entry.get("kev")) and bool(base["cve"])
-    return {**base, **consulting.severity(base)}  # 위험도는 규칙으로 계산
+    return {**base, **consulting.severity(base)}
 
 
 def _pick(v, allowed: set, default: str = "") -> str:
@@ -209,7 +198,7 @@ def write_post(date: str, entries: list[dict], terms: list[dict], summary: str =
         }
         for t in terms
     ]
-    scored = [e["severity"] for e in entries if isinstance(e["severity"], int)]  # '참고' 기사는 평균에서 제외
+    scored = [e["severity"] for e in entries if isinstance(e["severity"], int)]
     threat = max(1, round(sum(scored) / len(scored))) if scored else 1
     lines = [
         "---",
@@ -332,7 +321,7 @@ def write_comment_template(date: str, entries: list[dict]) -> Path:
                 hint.append(f"CVSS {it['cvss']:g}")
             hint.append(f"{it['region']}·{it['category']}")
         except (KeyError, TypeError, ValueError):
-            hint = []  # 힌트는 부가 정보: 실패해도 양식은 만든다
+            hint = []
         tag = f"  [{' · '.join(hint)}]" if hint else ""
         lines.append(f"# {i:02d}. {plain(e.get('title'), 60)}{tag}")
         lines.append(f'issue{i}: ""')

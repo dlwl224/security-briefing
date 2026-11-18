@@ -1,7 +1,4 @@
-"""SSRF 방어(netsafe)와 지표 갱신(refresh) 안전성 테스트 — 네트워크 없이 실행.
-
-실행: python -m unittest discover tests
-"""
+"""SSRF 방어(netsafe)와 지표 갱신(refresh) 안전성 테스트 — 네트워크 없이 실행."""
 
 import socket
 import sys
@@ -65,7 +62,7 @@ class SSRFTest(unittest.TestCase):
         with mock.patch.object(netsafe.socket, "getaddrinfo", side_effect=dns):
             with self.assertRaises(netsafe.UnsafeURLError):
                 netsafe.safe_get(session, "https://news.example/article", max_bytes=1000)
-        self.assertEqual(session.get.call_count, 1)  # 내부 주소로는 요청 자체를 보내지 않음
+        self.assertEqual(session.get.call_count, 1)
 
     def test_oversized_response_rejected(self):
         resp = mock.Mock(is_redirect=False, status_code=200)

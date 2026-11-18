@@ -1,12 +1,4 @@
-"""분석 노트 AI 피드백 — 새로 쓰거나 고친 노트에만 코칭을 디스코드로 보낸다.
-
-- 사이트에는 내가 쓴 글이 그대로 게시되고, AI 는 글을 고치지 않는다 (피드백만).
-- 기준: 위험분석 4단계 ① 자산·노출 ② 위협·취약점 ③ 가능성·영향 ④ 대응 권고
-
-사용 (GitHub Actions 가 자동 실행):
-  BEFORE=<이전 커밋> AFTER=<새 커밋> python -m briefing feedback
-  python -m briefing feedback --dry-run 2026-11-18   # 로컬 테스트: 해당 날짜 노트 전부, AI 없이 출력만
-"""
+"""분석 노트 AI 피드백 — 새로 쓰거나 고친 노트에만 코칭을 디스코드로 보낸다."""
 
 import json
 import os
@@ -37,7 +29,7 @@ def git(*args: str) -> str:
 
 def load_yaml(text: str) -> dict:
     try:
-        data = yaml.safe_load(text or "") or {}  # safe_load: 임의 객체 생성 불가
+        data = yaml.safe_load(text or "") or {}
     except yaml.YAMLError:
         return {}
     return data if isinstance(data, dict) else {}
@@ -189,7 +181,7 @@ def run(dry_date: str | None = None) -> int:
     if not notes:
         print("[info] 새로 쓴 분석 노트 없음")
         return 0
-    if os.getenv("DISCORD_FEEDBACK_WEBHOOK_URL"):  # 피드백 전용 비공개 채널이 있으면 그쪽으로
+    if os.getenv("DISCORD_FEEDBACK_WEBHOOK_URL"):
         notify.WEBHOOK = os.environ["DISCORD_FEEDBACK_WEBHOOK_URL"]
     embeds = []
     for n in notes:
@@ -202,6 +194,6 @@ def run(dry_date: str | None = None) -> int:
             else review(n, item, day_summary)
         )
         embeds.append(to_embed(n, item, fb))
-    for i in range(0, len(embeds), 5):  # 디스코드: 메시지당 임베드 최대 10개
+    for i in range(0, len(embeds), 5):
         notify.send({"username": "분석 노트 코치", "embeds": embeds[i : i + 5]})
     return 0

@@ -1,8 +1,4 @@
-"""디스코드 웹훅으로 오늘 브리핑 알림을 보낸다.
-
-python -m briefing notify            # 오늘 브리핑 알림
-python -m briefing notify --failed   # 실행 실패 알림
-"""
+"""디스코드 웹훅으로 오늘 브리핑 알림을 보낸다."""
 
 import json
 import os
@@ -26,14 +22,13 @@ def discord_safe(s: str) -> str:
 
 
 def send(payload: dict) -> None:
-    payload["allowed_mentions"] = {"parse": []}  # 어떤 멘션(@everyone 등)도 알림으로 동작하지 않게
+    payload["allowed_mentions"] = {"parse": []}
     if not WEBHOOK:
         print("[warn] DISCORD_WEBHOOK_URL 없음 — 보낼 내용만 출력")
         print(json.dumps(payload, ensure_ascii=False, indent=2))
         return
     if not WEBHOOK.startswith(("https://discord.com/api/webhooks/", "https://discordapp.com/api/webhooks/")):
         raise SystemExit("[error] DISCORD_WEBHOOK_URL 형식이 디스코드 웹후크가 아님")
-    # 웹후크 URL 자체가 비밀값이므로, 오류 메시지·로그에 URL 이 찍히지 않게 상태 코드만 남긴다
     try:
         r = requests.post(WEBHOOK, json=payload, timeout=30, allow_redirects=False)
     except requests.RequestException as e:
@@ -48,7 +43,7 @@ def wait_until_live(url: str, max_wait: int = 420) -> None:
     end = time.time() + max_wait
     while time.time() < end:
         try:
-            if requests.get(url, timeout=15).status_code == 200:
+            if requests.get(url, timeout=15, allow_redirects=False).status_code == 200:
                 return
         except requests.RequestException:
             pass

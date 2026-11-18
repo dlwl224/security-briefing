@@ -1,8 +1,5 @@
 name: Security Scan
 
-# 코드가 바뀔 때와 매주 한 번:
-# - CodeQL: Python/JavaScript/워크플로 코드의 취약점(XSS, 인젝션, SSRF 등) 정적 분석
-# - pip-audit: 사용 중인 파이썬 라이브러리의 알려진 취약점(CVE) 검사
 on:
   push:
     branches: [main]
@@ -10,7 +7,7 @@ on:
   pull_request:
     branches: [main]
   schedule:
-    - cron: "0 18 * * 0"   # 매주 월요일 03:00 KST
+    - cron: "0 18 * * 0"
   workflow_dispatch:
 
 permissions: {}
@@ -21,7 +18,7 @@ jobs:
     timeout-minutes: 30
     permissions:
       contents: read
-      security-events: write   # 결과를 Security 탭에 올리기 위한 권한
+      security-events: write
     strategy:
       fail-fast: false
       matrix:

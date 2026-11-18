@@ -1,9 +1,4 @@
-"""매일 보안 이슈 브리핑 생성: 수집 → 선정 → 본문 수집 → 요약 → 포스트 작성.
-
-사용법:
-  python -m briefing daily            # 실제 실행 (GEMINI_API_KEY 필요)
-  python -m briefing daily --dry-run  # AI 없이 수집만 테스트하고 RSS 요약으로 임시 포스트 생성
-"""
+"""매일 보안 이슈 브리핑 생성: 수집 → 선정 → 본문 수집 → 요약 → 포스트 작성."""
 
 import json
 from datetime import datetime
@@ -21,7 +16,6 @@ def run(dry: bool = False) -> int:
     seen = json.loads(SEEN.read_text(encoding="utf-8")) if SEEN.exists() else []
 
     if not dry:
-        # 최근 2주 글의 CVSS·EPSS·KEV 를 공식 데이터로 다시 조회 (NVD 분석 완료, EPSS 일일 변동 반영)
         refresh.refresh_recent(date)
 
     candidates = collect.collect_candidates(set(seen))
@@ -32,7 +26,6 @@ def run(dry: bool = False) -> int:
         return 0
 
     if dry:
-        # 국내/해외 섞어서 앞에서부터 고름
         kr = [c for c in candidates if c["region"] == "국내"]
         gl = [c for c in candidates if c["region"] == "해외"]
         picked = (kr[:2] + gl[:3] + kr[2:] + gl[3:])[: config.TOP_N]
@@ -77,7 +70,6 @@ def run(dry: bool = False) -> int:
             raise RuntimeError("요약 결과가 비어 있음")
 
     if not dry:
-        # 위험도·요약은 AI 판단, CVE/CVSS/EPSS/KEV 는 공식 데이터로 검증·보강
         enrich.enrich(entries, [e.get("_text", "") for e in entries])
 
     path = render.write_post(date, entries, terms, summary)

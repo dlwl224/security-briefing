@@ -1,11 +1,3 @@
-/* =========================================================
-   Daily Security Briefing — Editorial Threat Intelligence
-   - 무채색 + 위험도 신호색 하나
-   - 애니메이션은 transform / opacity 만 (60fps)
-   - prefers-reduced-motion 존중
-   - 인라인 스타일 없음 (CSP style-src 'self')
-   ========================================================= */
-
 :root {
   --bg: #f3f3f1;
   --surface: #ffffff;
@@ -57,7 +49,6 @@
   --ink-3: #75767c; --line: rgba(255,255,255,.08); --line-2: rgba(255,255,255,.14); --ghost: rgba(255,255,255,.045);
 }
 
-/* ---------- base ---------- */
 *, *::before, *::after { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; scroll-padding-top: 88px; }
 body {
@@ -79,19 +70,16 @@ p { margin: 0; }
 
 .wrap { width: min(100% - var(--gutter) * 2, var(--wrap)); margin-inline: auto; }
 
-/* severity → 신호색 */
 [data-sev="1"] { --sig: var(--sev-1); }
 [data-sev="2"] { --sig: var(--sev-2); }
 [data-sev="3"] { --sig: var(--sev-3); }
 [data-sev="4"] { --sig: var(--sev-4); }
 [data-sev="5"] { --sig: var(--sev-5); }
 
-/* ---------- reading progress ---------- */
 .progress { position: fixed; inset: 0 0 auto 0; height: 2px; z-index: 60; pointer-events: none; }
 .progress__bar { display: block; height: 100%; background: var(--sev-5); transform-origin: 0 50%; transform: scaleX(0); }
 .layout-home .progress { display: none; }
 
-/* ---------- nav ---------- */
 .nav {
   position: sticky; top: 0; z-index: 50;
   background: color-mix(in srgb, var(--bg) 78%, transparent);
@@ -119,7 +107,6 @@ p { margin: 0; }
   .nav__group { font-size: 13px; }
 }
 
-/* ---------- chips ---------- */
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .chip {
   display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 10px; border-radius: 99px;
@@ -129,7 +116,6 @@ p { margin: 0; }
 .chip--sev::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--sig); }
 .chip--cve { font-family: var(--mono); font-weight: 500; letter-spacing: 0; }
 
-/* ---------- threat meter ---------- */
 .threat { display: grid; gap: 10px; min-width: 240px; }
 .threat__head { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; }
 .threat__k { font-size: 11px; color: var(--ink-3); }
@@ -149,9 +135,6 @@ p { margin: 0; }
 @keyframes fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 @keyframes pulse { 50% { opacity: .35; } }
 
-/* =========================================================
-   HERO (home + post 공통)
-   ========================================================= */
 .hero { position: relative; padding: clamp(40px, 8vw, 96px) 0 clamp(40px, 6vw, 72px); isolation: isolate; }
 .hero__ghost {
   position: absolute; z-index: -1; inset: 0 0 auto 0; text-align: center; pointer-events: none; user-select: none;
@@ -184,18 +167,12 @@ p { margin: 0; }
 .btn:hover .arrow { transform: translateX(4px); }
 .btn--ghost { background: transparent; color: var(--ink); box-shadow: inset 0 0 0 1px var(--line-2); }
 
-/* =========================================================
-   SECTION HEAD
-   ========================================================= */
 .section { padding: clamp(40px, 6vw, 80px) 0; }
 .section__head { display: flex; justify-content: space-between; align-items: end; gap: 16px; margin-bottom: 24px; }
 .section__k { font: 500 11px/1 var(--mono); color: var(--ink-3); letter-spacing: .04em; text-transform: uppercase; }
 .section__title { font-size: clamp(22px, 2.6vw, 30px); margin-top: 10px; }
 .section__aside { color: var(--ink-3); font-size: 13px; }
 
-/* =========================================================
-   BENTO
-   ========================================================= */
 .bento { display: grid; gap: 14px; grid-template-columns: repeat(4, 1fr); grid-auto-rows: minmax(220px, auto); }
 .card {
   --mx: 50%; --my: 50%;
@@ -203,11 +180,11 @@ p { margin: 0; }
   padding: 22px; border-radius: var(--radius); background: var(--surface); box-shadow: var(--shadow);
   transition: transform .5s var(--spring), box-shadow .4s var(--ease);
 }
-.card::before { /* 커서를 따라오는 스포트라이트 */
+.card::before {
   content: ""; position: absolute; inset: 0; z-index: -1; opacity: 0; transition: opacity .4s;
   background: radial-gradient(420px circle at var(--mx) var(--my), color-mix(in srgb, var(--sig, var(--ink)) 10%, transparent), transparent 60%);
 }
-.card::after { /* 상단 신호 라인 */
+.card::after {
   content: ""; position: absolute; inset: 0 0 auto 0; height: 3px; background: var(--sig, transparent);
   transform: scaleX(0); transform-origin: 0 50%; transition: transform .6s var(--ease);
 }
@@ -230,7 +207,7 @@ p { margin: 0; }
   background: var(--surface-2); transition: transform .5s var(--spring), background .3s, color .3s;
 }
 .card:hover .card__go { transform: rotate(-45deg); background: var(--ink); color: var(--bg); }
-.card__bignum { /* 카드 배경의 거대한 순번 */
+.card__bignum {
   position: absolute; right: -6px; bottom: -28px; z-index: -1; pointer-events: none;
   font: 850 150px/1 var(--sans); letter-spacing: -.08em; color: var(--ghost);
   transition: transform .8s var(--ease);
@@ -259,7 +236,6 @@ p { margin: 0; }
   .card { min-height: 200px; }
 }
 
-/* ---------- region split ---------- */
 .split { display: grid; gap: 10px; }
 .split__bar { display: flex; height: 10px; border-radius: 5px; overflow: hidden; gap: 3px; }
 .split__bar span { background: var(--ink); border-radius: 5px; }
@@ -269,9 +245,6 @@ p { margin: 0; }
 .split__bar [data-n="4"] { flex: 4; } .split__bar [data-n="5"] { flex: 5; }
 .split__legend { display: flex; justify-content: space-between; font-size: 13px; color: var(--ink-2); }
 
-/* =========================================================
-   HEATMAP (발행 기록)
-   ========================================================= */
 .heat { overflow-x: auto; padding-bottom: 6px; scrollbar-width: thin; }
 .heat__grid { display: grid; grid-auto-flow: column; grid-template-rows: repeat(7, 14px); gap: 4px; width: max-content; }
 .heat__cell { width: 14px; height: 14px; border-radius: 4px; background: var(--line); transition: transform .25s var(--spring); }
@@ -283,9 +256,6 @@ a.heat__cell:hover, a.heat__cell:focus-visible { transform: scale(1.5); }
 .heat__legend { display: flex; align-items: center; gap: 6px; margin-top: 14px; font-size: 12px; color: var(--ink-3); }
 .heat__legend .heat__cell { width: 10px; height: 10px; border-radius: 3px; }
 
-/* =========================================================
-   ARCHIVE LIST
-   ========================================================= */
 .archive { border-top: 1px solid var(--line); }
 .row {
   display: grid; grid-template-columns: 90px 130px 1fr auto 34px; gap: 20px; align-items: center;
@@ -310,9 +280,6 @@ a.heat__cell:hover, a.heat__cell:focus-visible { transform: scale(1.5); }
   .row .card__go { display: none; }
 }
 
-/* =========================================================
-   POST — briefing layout
-   ========================================================= */
 .post-hero .hero__inner { padding-top: clamp(56px, 11vw, 180px); }
 .toc { display: grid; gap: 0; margin-top: 8px; width: min(100%, 760px); text-align: left; counter-reset: toc; }
 .toc a {
@@ -376,7 +343,6 @@ a.heat__cell:hover, a.heat__cell:focus-visible { transform: scale(1.5); }
 .source a { color: var(--ink); font-weight: 600; border-bottom: 1px solid var(--line-2); transition: border-color .2s; }
 .source a:hover { border-color: var(--ink); }
 
-/* 용어 하이라이트 + 툴팁 */
 .term {
   all: unset; cursor: help; border-bottom: 1.5px dotted var(--ink-3); position: relative; transition: background .2s;
 }
@@ -390,7 +356,6 @@ a.heat__cell:hover, a.heat__cell:focus-visible { transform: scale(1.5); }
 .tip b { display: block; font-size: 15px; margin-bottom: 4px; }
 .tip b span { font: 400 11px var(--mono); opacity: .6; margin-left: 6px; }
 
-/* 오늘의 용어 카드 */
 .terms { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
 .tcard { padding: 22px; border-radius: var(--radius-sm); background: var(--surface); box-shadow: var(--shadow); display: grid; gap: 10px; align-content: start; transition: transform .5s var(--spring), box-shadow .4s; }
 .tcard:hover { transform: translateY(-3px); box-shadow: var(--shadow-lift); }
@@ -405,9 +370,6 @@ a.heat__cell:hover, a.heat__cell:focus-visible { transform: scale(1.5); }
 .pager span { font: 500 11px var(--mono); color: var(--ink-3); }
 .pager .is-empty { visibility: hidden; }
 
-/* =========================================================
-   PAGE (glossary / about)
-   ========================================================= */
 .page-body { padding-bottom: 80px; }
 .prose { max-width: 760px; margin-inline: auto; font-size: 17px; line-height: 1.85; }
 .prose h2 { font-size: 26px; margin: 56px 0 16px; }
@@ -438,9 +400,6 @@ a.heat__cell:hover, a.heat__cell:focus-visible { transform: scale(1.5); }
 .alpha button:hover, .alpha button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
 .empty { text-align: center; color: var(--ink-3); padding: 40px 0; }
 
-/* =========================================================
-   FOOTER
-   ========================================================= */
 .footer { border-top: 1px solid var(--line); padding: 48px 0 56px; margin-top: 40px; }
 .footer__inner { width: min(100% - var(--gutter) * 2, var(--wrap)); margin-inline: auto; display: grid; gap: 10px; }
 .footer__brand { font-weight: 700; }
@@ -449,9 +408,6 @@ a.heat__cell:hover, a.heat__cell:focus-visible { transform: scale(1.5); }
 .footer__links { font-size: 13px; color: var(--ink-3); }
 .footer__links a { color: var(--ink-2); border-bottom: 1px solid var(--line-2); }
 
-/* =========================================================
-   REVEAL (JS가 화면 밖 요소에만 적용 → 깜빡임 없음)
-   ========================================================= */
 .will-reveal { opacity: 0; transform: translateY(28px); }
 .will-reveal.is-in { opacity: 1; transform: none; transition: opacity .9s var(--ease), transform .9s var(--ease); transition-delay: var(--d, 0s); }
 
@@ -467,11 +423,8 @@ a.heat__cell:hover, a.heat__cell:focus-visible { transform: scale(1.5); }
   .card, .fact, .tcard { box-shadow: none; border: 1px solid #ddd; }
 }
 
-/* =========================================================
-   ABOUT — pipeline
-   ========================================================= */
 .pipe { list-style: none; margin: 0 auto 72px; padding: 0; max-width: 860px; position: relative; display: grid; gap: 14px; }
-.pipe::before { /* 단계를 잇는 세로선: 스크롤에 따라 그려짐 */
+.pipe::before {
   content: ""; position: absolute; left: 31px; top: 24px; bottom: 24px; width: 2px; background: var(--line-2);
 }
 .pipe::after {
@@ -497,9 +450,6 @@ a.heat__cell:hover, a.heat__cell:focus-visible { transform: scale(1.5); }
 .card__figure--cve b { font-size: clamp(18px, 1.9vw, 24px) !important; font-weight: 650; letter-spacing: -.01em !important; }
 .chips--lg .chip { height: 32px; padding: 0 14px; font-size: 14px; color: var(--ink); background: var(--surface-2); }
 
-/* =========================================================
-   METRICS — 공식 지표 카드, AI 라벨, ⓘ 버튼
-   ========================================================= */
 [data-cvss="LOW"] { --cv: var(--sev-2); }
 [data-cvss="MEDIUM"] { --cv: var(--sev-3); }
 [data-cvss="HIGH"] { --cv: var(--sev-4); }
@@ -512,7 +462,7 @@ a.heat__cell:hover, a.heat__cell:focus-visible { transform: scale(1.5); }
   text-transform: none; letter-spacing: 0; font-style: italic;
 }
 .info:hover, .info:focus-visible, .info[aria-expanded="true"] { color: var(--bg); background: var(--ink); box-shadow: none; transform: scale(1.12); }
-.info::after { content: ""; position: absolute; inset: -12px; } /* 터치 영역 44px 확보 */
+.info::after { content: ""; position: absolute; inset: -12px; }
 .info { position: relative; }
 
 .chip--ai { background: transparent; box-shadow: inset 0 0 0 1px var(--line-2); color: var(--ink-2); gap: 4px; }
@@ -528,7 +478,7 @@ a.heat__cell:hover, a.heat__cell:focus-visible { transform: scale(1.5); }
 .band { display: inline-flex; align-items: center; height: 24px; padding: 0 10px; border-radius: 99px; font-size: 12px; font-weight: 700; color: #fff; background: var(--cv, var(--ink-3)); }
 .fact--cvss .meter i { background: var(--cv, var(--sig)); }
 .meter--bands { position: relative; overflow: visible; }
-.meter--bands::after { /* 4.0 / 7.0 / 9.0 등급 경계 눈금 */
+.meter--bands::after {
   content: ""; position: absolute; inset: -3px 0; pointer-events: none;
   background:
     linear-gradient(var(--surface), var(--surface)) 40% 0 / 2px 100% no-repeat,
@@ -541,16 +491,12 @@ a.heat__cell:hover, a.heat__cell:focus-visible { transform: scale(1.5); }
 .tip p { margin: 0; }
 .tip .tip__sub { display: block; font: 400 11px var(--mono); opacity: .6; margin: 2px 0 8px; }
 
-/* About — 지표 읽는 법 */
 .guide { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; margin: 8px 0 24px; }
 .guide .tcard__t small { font: 400 11px var(--mono); color: var(--ink-3); margin-left: 6px; }
 .scale { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-top: 6px; }
 .scale span { display: grid; gap: 2px; padding: 10px; border-radius: 10px; color: #fff; font-size: 12px; font-weight: 700; background: var(--cv); }
 .scale span small { font: 500 11px var(--mono); opacity: .9; }
 
-/* =========================================================
-   CONSULTING VIEW
-   ========================================================= */
 .factors { margin: 18px 0 4px; }
 .factors__k { font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
 .factors__k .mono { font-size: 11px; font-weight: 400; color: var(--ink-3); }

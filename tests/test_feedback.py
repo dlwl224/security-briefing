@@ -1,7 +1,4 @@
-"""분석 노트 피드백 로직 테스트 — 네트워크·AI 없이 실행.
-
-실행: python -m unittest discover tests
-"""
+"""분석 노트 피드백 로직 테스트 — 네트워크·AI 없이 실행."""
 
 import sys
 import unittest
@@ -39,7 +36,7 @@ class FeedbackTest(unittest.TestCase):
         self.assertNotIn("@here", e["description"])
         self.assertNotIn("](https", e["description"].replace("\\](", ""))
         self.assertIn("①자산✅", e["description"])
-        self.assertIn("②원인⬜", e["description"])  # "yes" 는 True 가 아님
+        self.assertIn("②원인⬜", e["description"])
 
 
 if __name__ == "__main__":

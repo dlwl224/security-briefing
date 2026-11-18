@@ -1,16 +1,9 @@
-/* Daily Security Briefing — 인터랙션 (의존성 없음)
- * 보안: innerHTML 을 쓰지 않고 textContent / createElement 만 사용한다.
- * 성능: transform/opacity 만 바꾸고, 스크롤 처리는 rAF 로 묶는다.
- */
 (() => {
   "use strict";
 
-  /* ---------- 0. 클릭재킹 방어 (OWASP A04/A05) ----------
-   * GitHub Pages 는 X-Frame-Options / CSP frame-ancestors 헤더를 설정할 수 없어서,
-   * 다른 사이트가 이 페이지를 투명 iframe 으로 덮어씌우지 못하게 JS 로 막는다. */
   if (window.top !== window.self) {
     document.documentElement.style.display = "none";
-    try { window.top.location.replace(window.self.location.href); } catch { /* 교차 출처면 그냥 숨김 유지 */ }
+    try { window.top.location.replace(window.self.location.href); } catch { /* noop */ }
     return;
   }
   const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -22,7 +15,6 @@
     try { return JSON.parse(el.textContent); } catch { return null; }
   };
 
-  /* ---------- 1. 스크롤: nav 경계선, 읽기 진행률 ---------- */
   const nav = $(".nav");
   const bar = $(".progress__bar");
   let ticking = false;
@@ -38,7 +30,6 @@
   };
   addEventListener("scroll", () => { if (!ticking) { ticking = true; requestAnimationFrame(onScroll); } }, { passive: true });
 
-  /* ---------- 2. 등장 애니메이션 (화면 밖 요소에만 적용 → 깜빡임 없음) ---------- */
   const revealEls = $$("[data-reveal], .card, .row, .fact");
   if (!reduce && "IntersectionObserver" in window) {
     const io = new IntersectionObserver((entries) => {
@@ -49,7 +40,6 @@
     revealEls.forEach((el) => {
       const r = el.getBoundingClientRect();
       if (r.top > innerHeight) {
-        // 같은 줄의 형제 요소끼리 순차 등장 (stagger)
         const idx = Array.prototype.indexOf.call(el.parentElement.children, el) % 6;
         el.style.setProperty("--d", `${idx * 70}ms`);
         el.classList.add("will-reveal");
@@ -62,7 +52,6 @@
     revealEls.forEach((el) => el.classList.add("is-in"));
   }
 
-  /* ---------- 3. 카드 스포트라이트 (커서 위치) ---------- */
   if (!reduce && matchMedia("(hover: hover)").matches) {
     $$(".card").forEach((card) => {
       card.addEventListener("pointermove", (e) => {
@@ -73,7 +62,6 @@
     });
   }
 
-  /* ---------- 4. 숫자 카운트업 ---------- */
   const countUp = (el) => {
     const target = parseInt(el.dataset.count, 10);
     if (!Number.isFinite(target) || reduce || target === 0) { el.textContent = String(target || 0); return; }
@@ -86,7 +74,6 @@
     requestAnimationFrame(step);
   };
 
-  /* ---------- 5. 아카이브 데이터 → 연속 발행일 + 히트맵 ---------- */
   const archive = readJSON("archive-data");
   if (archive) {
     const DAY = 864e5;
@@ -98,7 +85,6 @@
     const byDay = new Map();
     archive.forEach((p) => { if (typeof p.d === "string" && /^\d{4}-\d{2}-\d{2}$/.test(p.d)) byDay.set(parse(p.d), p); });
 
-    // 연속 발행: 오늘(또는 아직 발행 전이면 어제)부터 거꾸로
     const streakEl = $("[data-streak]");
     if (streakEl) {
       let day = kstToday();
@@ -108,7 +94,6 @@
       streakEl.dataset.count = String(n);
     }
 
-    // 히트맵: 최근 26주, 열 = 주(일~토)
     const grid = $("[data-heatmap] .heat__grid");
     if (grid) {
       const today = kstToday();
@@ -121,8 +106,6 @@
         let cell;
         if (p) {
           cell = document.createElement("a");
-          // 링크 주소는 데이터(DOM 텍스트)에서 읽지 않고, 숫자 계산으로 만든 날짜(label)로 직접 조립한다.
-          // → 데이터가 변조돼도 javascript: 등 다른 주소가 들어갈 수 없음 (CodeQL js/xss-through-dom)
           cell.href = `briefing/${label}/`;
           const s = Math.min(5, Math.max(1, parseInt(p.s, 10) || 1));
           cell.dataset.sev = String(s);
@@ -142,7 +125,6 @@
     }
   }
 
-  // 카운트업은 화면에 보일 때 시작
   const counters = $$("[data-count]");
   if ("IntersectionObserver" in window) {
     const cio = new IntersectionObserver((es) => es.forEach((e) => {
@@ -151,7 +133,6 @@
     counters.forEach((c) => cio.observe(c));
   } else counters.forEach(countUp);
 
-  /* ---------- 6. 브리핑: 레일 활성화 ---------- */
   const issues = $$(".issue");
   const railLinks = $$(".rail a");
   if (issues.length && "IntersectionObserver" in window) {
@@ -170,7 +151,6 @@
     issues.forEach((s) => rio.observe(s));
   }
 
-  /* ---------- 7. 툴팁: 본문 속 보안 용어 + 지표 ⓘ 버튼 ---------- */
   const terms = readJSON("terms-data") || [];
   const metrics = readJSON("metrics-data") || {};
   const TRIGGER = ".term, .info";
@@ -181,7 +161,6 @@
   document.body.appendChild(tip);
   let openBtn = null;
 
-  // 버튼 → {title, sub, body}. 모든 값은 textContent 로만 넣는다.
   const contentFor = (btn) => {
     if (btn.classList.contains("info")) {
       const key = btn.dataset.info;
@@ -271,7 +250,6 @@
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") hide(); });
   addEventListener("resize", hide);
 
-  /* ---------- 8. About: 파이프라인 선 그리기 ---------- */
   const pipe = $(".pipe");
   function pipeProgress() {
     if (!pipe) return;
@@ -280,7 +258,6 @@
     pipe.style.setProperty("--p", reduce ? 1 : p.toFixed(3));
   }
 
-  /* ---------- 9. 용어 사전: 검색 + 첫 글자 필터 ---------- */
   const list = $("#term-list");
   if (list) {
     const cards = $$(".tcard", list);

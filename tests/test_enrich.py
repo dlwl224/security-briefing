@@ -1,7 +1,4 @@
-"""공식 지표 보강(NVD/EPSS/KEV) 로직 테스트 — 네트워크 없이 응답을 흉내 낸다.
-
-실행: python -m unittest discover tests
-"""
+"""공식 지표 보강(NVD/EPSS/KEV) 로직 테스트 — 네트워크 없이 응답을 흉내 낸다."""
 
 import sys
 import unittest
@@ -54,10 +51,10 @@ class ParseTest(unittest.TestCase):
 
     def test_parse_nvd_rejects_malicious_values(self):
         r = enrich.parse_nvd(nvd(999, sev="<script>", vector="<img src=x onerror=alert(1)>"))
-        self.assertNotIn("cvss", r)  # 범위 밖 점수는 버림
+        self.assertNotIn("cvss", r)
         r = enrich.parse_nvd(nvd(7.5, sev="<script>", vector="javascript:alert(1)<x>"))
-        self.assertEqual(r["cvss_severity"], "HIGH")  # 등급은 점수로 다시 계산
-        self.assertEqual(r["cvss_vector"], "")  # 형식이 다른 벡터는 버림
+        self.assertEqual(r["cvss_severity"], "HIGH")
+        self.assertEqual(r["cvss_vector"], "")
 
     def test_parse_nvd_handles_missing_cvssdata(self):
         data = {"vulnerabilities": [{"cve": {"metrics": {"cvssMetricV31": [{"type": "Primary"}]}}}]}
@@ -68,7 +65,7 @@ class ParseTest(unittest.TestCase):
     def test_parse_epss(self):
         r = enrich.parse_epss({"data": [{"epss": "0.00734", "percentile": "0.55119", "date": "2026-11-18"}]})
         self.assertEqual((r["epss"], r["epss_percentile"], r["epss_date"]), (0.73, 55.1, "2026-11-18"))
-        self.assertIsNone(enrich.parse_epss({"data": [{"epss": "5"}]}))  # 확률은 0~1
+        self.assertIsNone(enrich.parse_epss({"data": [{"epss": "5"}]}))
         bad = enrich.parse_epss({"data": [{"epss": "0.1", "date": "<b>"}]})
         self.assertEqual(bad["epss_date"], "")
 
@@ -76,7 +73,6 @@ class ParseTest(unittest.TestCase):
 class EnrichFlowTest(unittest.TestCase):
     def run_enrich(self, entry, text, nvd_resp):
         def fake_get(url, params, **kwargs):
-            # 부분 문자열("nvd" in url)이 아니라 정확한 주소로 비교 (CodeQL py/incomplete-url-substring-sanitization)
             if url == enrich.NVD_URL:
                 return nvd_resp
             if url == enrich.EPSS_URL:
@@ -120,7 +116,7 @@ class EnrichFlowTest(unittest.TestCase):
             }
         )
         m = render.metrics(e)
-        self.assertEqual(e["cve"], "")  # 형식 불일치 CVE
+        self.assertEqual(e["cve"], "")
         self.assertEqual((m["cve_status"], m["epss"], m["kev"], m["cvss_source"]), ("", 0.0, False, ""))
 
 
@@ -138,13 +134,13 @@ class ConsultingTest(unittest.TestCase):
         self.assertIn("공격 조건 까다로움", texts)
         self.assertIn("로그인 불필요", texts)
         self.assertEqual(consulting.decode_vector("<script>"), [])
-        self.assertEqual(consulting.decode_vector("AV:N/AC:L/Au:N/C:C/I:C/A:C"), [])  # v2 는 해석 안 함
+        self.assertEqual(consulting.decode_vector("AV:N/AC:L/Au:N/C:C/I:C/A:C"), [])
 
     def test_priority_rules(self):
         from briefing import consulting
 
         P = lambda **k: consulting.priority({"cve": "CVE-2026-1", **k})["priority"]
-        self.assertEqual(P(kev=True, cvss=4.0), "P1")  # 실제 악용이면 점수와 무관하게 즉시
+        self.assertEqual(P(kev=True, cvss=4.0), "P1")
         self.assertEqual(P(epss=12, cvss=5.0), "P1")
         self.assertEqual(P(cvss=8.1, epss=0.7), "P2")
         self.assertEqual(P(cvss=5.0, epss=0.2), "P3")
@@ -166,7 +162,7 @@ class ConsultingTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d, mock.patch.object(render, "COMMENTS", Path(d)):
             p = render.write_comment_template("2099-01-01", [{"title": "제목\n# 주입"}])
             self.assertIn('issue1: ""', p.read_text(encoding="utf-8"))
-            self.assertNotIn("\n# 주입", p.read_text(encoding="utf-8"))  # 제목 개행으로 YAML 조작 불가
+            self.assertNotIn("\n# 주입", p.read_text(encoding="utf-8"))
             p.write_text('issue1: "사람이 쓴 코멘트"\n', encoding="utf-8")
             render.write_comment_template("2099-01-01", [{"title": "x"}])
             self.assertIn("사람이 쓴 코멘트", p.read_text(encoding="utf-8"))
@@ -184,18 +180,18 @@ class SeverityRuleTest(unittest.TestCase):
 
     def test_formula(self):
         r = self.S(exploitation="active", scale="medium", critical_sector=True, domestic=True)
-        self.assertEqual(r["severity"], 5)  # 2+1+1+1 = 5
+        self.assertEqual(r["severity"], 5)
         self.assertEqual(self.S(exploitation="poc", scale="unknown")["severity"], 1)
-        self.assertEqual(self.S(exploitation="none", scale="small")["severity"], 1)  # 최소 1
+        self.assertEqual(self.S(exploitation="none", scale="small")["severity"], 1)
         self.assertEqual(
             self.S(exploitation="active", scale="large", critical_sector=True, domestic=True)["severity"], 5
-        )  # 최대 5
+        )
         self.assertEqual(self.S(exploitation="active", scale="large")["severity"], 4)
         self.assertEqual(r["severity_method"], "rule")
 
     def test_kev_overrides_ai_judgment(self):
         r = self.S(exploitation="none", scale="medium", kev=True)
-        self.assertEqual(r["severity"], 3)  # KEV → 실제 악용 +2
+        self.assertEqual(r["severity"], 3)
         self.assertIn("CISA KEV", r["severity_basis"][0])
 
     def test_reference_categories(self):
@@ -209,9 +205,7 @@ class SeverityRuleTest(unittest.TestCase):
     def test_invalid_factor_values_fall_back(self):
         r = self.S(exploitation="<script>", scale="huge", severity=4)
         self.assertEqual((r["severity"], r["severity_method"]), (4, "ai"))
-        self.assertEqual(
-            self.S(exploitation="active", scale="small", domestic="yes")["severity"], 2
-        )  # "yes" 는 True 아님
+        self.assertEqual(self.S(exploitation="active", scale="small", domestic="yes")["severity"], 2)
 
     def test_threat_level_excludes_reference(self):
         import tempfile
@@ -223,4 +217,4 @@ class SeverityRuleTest(unittest.TestCase):
         ]
         with tempfile.TemporaryDirectory() as d, mock.patch.object(render, "POSTS", Path(d)):
             text = render.write_post("2099-01-02", entries, []).read_text(encoding="utf-8")
-        self.assertIn("threat_level: 5", text)  # 정책 기사(참고)는 평균에서 제외
+        self.assertIn("threat_level: 5", text)
