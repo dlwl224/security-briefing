@@ -1,0 +1,59 @@
+name: CI
+
+# PR 을 올리거나 main 에 코드가 들어올 때: 코드 규칙(ruff) + 테스트.
+# 둘 다 통과해야 머지하는 것을 원칙으로 한다 (docs/CONVENTIONS.md).
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+    paths: ["**.py", "pyproject.toml", "requirements.txt", "_layouts/**", "_includes/**", "_data/*.json", ".github/workflows/**"]
+
+# pull_request(포크 PR 포함)는 읽기 권한만으로 실행 — 비밀값을 쓰지 않는다
+permissions: {}
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint (ruff)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0  # v7.1.0
+        with:
+          python-version: "3.12"
+      - name: Install ruff
+        run: pip install ruff==0.17.5
+      - name: Lint
+        run: ruff check --output-format github .
+      - name: Format
+        run: ruff format --check .
+
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0  # v7.1.0
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Unit & security tests
+        run: python -m unittest discover tests -v
+      - name: CLI smoke test
+        run: python -m briefing --help

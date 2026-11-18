@@ -4,6 +4,7 @@
 
 [![Site](https://img.shields.io/badge/site-live-e11d3c?style=flat-square)](https://dlwl224.github.io/security-briefing/)
 [![Daily Briefing](https://github.com/dlwl224/security-briefing/actions/workflows/daily-briefing.yml/badge.svg)](https://github.com/dlwl224/security-briefing/actions/workflows/daily-briefing.yml)
+[![CI](https://github.com/dlwl224/security-briefing/actions/workflows/ci.yml/badge.svg)](https://github.com/dlwl224/security-briefing/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/dlwl224/security-briefing/actions/workflows/codeql.yml/badge.svg)](https://github.com/dlwl224/security-briefing/actions/workflows/codeql.yml)
 
 매일 오전 9시(KST), 국내·해외 보안 뉴스에서 **주요 이슈 5건**을 골라 AI로 요약하고
@@ -16,6 +17,7 @@ GitHub Pages 블로그에 자동 게시한 뒤 **Discord로 알림**을 보내�
 | ⚙️ 동작 방식 · 지표 읽는 법 | https://dlwl224.github.io/security-briefing/about/ |
 | 📡 RSS | https://dlwl224.github.io/security-briefing/feed.xml |
 | 🛡️ 보안 설계 (OWASP Top 10 대응) | [SECURITY.md](SECURITY.md) |
+| 🧭 개발 규칙 (구조·코드·시큐어 코딩·디자인 시스템·Git) | [docs/CONVENTIONS.md](docs/CONVENTIONS.md) |
 
 각 이슈는 이렇게 정리됩니다:
 - 🎯 **핵심**: 무슨 일이 일어났는지 짧고 정확하게
