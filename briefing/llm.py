@@ -81,10 +81,17 @@ SUMMARY_SCHEMA = {
                     "core": {"type": "STRING"},
                     "background": {"type": "STRING"},
                     "impact": {"type": "STRING"},
+                    "severity": {"type": "INTEGER"},
+                    "key_figure": {"type": "STRING"},
+                    "key_figure_label": {"type": "STRING"},
+                    "cve": {"type": "STRING"},
+                    "cvss": {"type": "NUMBER"},
                 },
-                "required": ["index", "title", "category", "core", "background", "impact"],
+                "required": ["index", "title", "category", "core", "background", "impact",
+                             "severity", "key_figure", "key_figure_label", "cve", "cvss"],
             },
         },
+        "daily_summary": {"type": "STRING"},
         "terms": {
             "type": "ARRAY",
             "items": {
@@ -98,7 +105,7 @@ SUMMARY_SCHEMA = {
             },
         },
     },
-    "required": ["items", "terms"],
+    "required": ["items", "terms", "daily_summary"],
 }
 
 
@@ -115,6 +122,13 @@ def summarize(articles: list[dict]) -> dict:
 - core (핵심): 무슨 일이 일어났는지 2~3문장으로 짧고 정확하게. 누가, 무엇을, 언제, 규모(숫자)가 있으면 포함. CVE 번호와 CVSS 점수가 기사에 있으면 적는다.
 - background (배경): 이 일이 왜 생겼는지, 이전 경과, 기사에 나오는 낯선 용어를 쉬운 말로 풀어서 3~4문장.
 - impact (영향): 일반 사용자의 생활, 기업·산업, 경제에 왜 중요한지, 그리고 지금 할 수 있는 대응(업데이트 등)을 2~3문장.
+- severity (위험도): 1~5 정수. 5=실제 악용 중이거나 대규모 피해·국가 핵심 인프라, 4=고위험 취약점·수십만 명 이상 피해, 3=특정 조직 피해·중요 패치, 2=제한적 영향, 1=정책·동향 참고.
+- key_figure: 기사에서 가장 상징적인 숫자 하나를 짧게 (예: "20만 5천", "9.8", "178개"). 기사에 숫자가 없으면 빈 문자열.
+- key_figure_label: 그 숫자가 무엇인지 아주 짧게 (예: "유출 의심 인원", "CVSS 점수", "감염 조직"). 숫자가 없으면 빈 문자열.
+- cve: 기사에 나온 대표 CVE 번호 하나 (예: "CVE-2026-114938"). 없으면 빈 문자열.
+- cvss: 기사에 명시된 CVSS 점수. 없으면 0. 추측하지 마라.
+
+daily_summary: 오늘 5건을 관통하는 흐름을 한 문장(40자 내외)으로. 예: "자바 원격 실행 취약점과 공급망 공격이 동시에 번진 하루".
 
 terms (오늘의 보안 용어): 기사들에 나온 보안 용어 중 비전공자가 모를 만한 것 3~6개.
 - term: 한국어 용어, english: 영어 원어, definition: 중학생도 이해할 수 있게 1~2문장, 가능하면 비유 포함.

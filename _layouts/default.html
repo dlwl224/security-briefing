@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  {%- comment -%}
+    보안: 외부 스크립트·폰트·CDN을 전혀 쓰지 않으므로 'self'만 허용하는 엄격한 CSP를 건다.
+    인라인 <script>/<style>/style="" 은 모두 차단된다 (JSON 데이터 블록은 실행되지 않으므로 허용).
+  {%- endcomment %}
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; manifest-src 'self'; base-uri 'none'; form-action 'none'; upgrade-insecure-requests">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f3f3f1" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0b0b0c" media="(prefers-color-scheme: dark)">
+  {% seo %}
+  {% feed_meta %}
+  <link rel="icon" href="{{ '/assets/favicon.svg' | relative_url }}" type="image/svg+xml">
+  <link rel="stylesheet" href="{{ '/assets/css/site.css' | relative_url }}">
+  <script src="{{ '/assets/js/site.js' | relative_url }}" defer></script>
+</head>
+<body class="layout-{{ page.layout | escape }}">
+  <a class="skip" href="#main">본문으로 건너뛰기</a>
+  <div class="progress" aria-hidden="true"><span class="progress__bar"></span></div>
+
+  <header class="nav">
+    <div class="nav__inner">
+      <nav class="nav__group" aria-label="주요 메뉴">
+        <a class="nav__link" href="{{ '/' | relative_url }}#archive">Briefings<sup class="nav__count">{{ site.posts | size }}</sup></a>
+        <a class="nav__link" href="{{ '/glossary/' | relative_url }}">Glossary<sup class="nav__count">{{ site.data.glossary | size }}</sup></a>
+      </nav>
+      <a class="nav__mark" href="{{ '/' | relative_url }}" aria-label="Daily Security Briefing 홈">
+        <span class="mark" aria-hidden="true">SB</span>
+      </a>
+      <nav class="nav__group nav__group--end" aria-label="보조 메뉴">
+        <a class="nav__link" href="{{ '/about/' | relative_url }}">How it works</a>
+        <a class="nav__link" href="{{ '/feed.xml' | relative_url }}">RSS</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    {{ content }}
+  </main>
+
+  <footer class="footer">
+    <div class="footer__inner">
+      <p class="footer__brand"><span class="mark mark--sm" aria-hidden="true">SB</span> Daily Security Briefing</p>
+      <p class="footer__note">공개된 보안 뉴스를 AI로 요약해 매일 09:00 KST 자동 발행합니다. 정확한 내용은 각 출처 원문을 확인하세요.</p>
+      <p class="footer__meta mono">Static · No trackers · CSP strict · Built with GitHub Actions</p>
+    </div>
+  </footer>
+</body>
+</html>

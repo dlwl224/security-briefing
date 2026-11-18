@@ -1,0 +1,133 @@
+---
+layout: default
+---
+{%- comment -%}
+  보안: items/terms 는 AI·RSS 에서 온 값 → 출력 시 항상 | escape.
+  링크는 생성 단계(render.safe_url)에서 http(s)만 통과시키고, 여기서도 escape.
+{%- endcomment -%}
+{%- assign no = page.issue_no | default: 1 | prepend: "00" | slice: -3, 3 -%}
+
+<section class="hero post-hero">
+  <div class="hero__ghost" aria-hidden="true">{{ page.date | date: "%m.%d" }}</div>
+  <div class="wrap hero__inner">
+    <p class="hero__meta mono">
+      <span>No.{{ no }}</span><span class="dot"></span>
+      <span>{{ page.date | date: "%Y.%m.%d" }} 09:00 KST</span><span class="dot"></span>
+      <span>{{ page.items.size }} ISSUES</span>
+    </p>
+    <h1 class="hero__title">{% if page.summary and page.summary != "" %}{{ page.summary | escape }}{% else %}{{ page.title | escape }}{% endif %}</h1>
+    {% include threat.html level=page.threat_level %}
+
+    {%- if page.items -%}
+    <nav class="toc" aria-label="오늘의 이슈 목록">
+      {%- for it in page.items -%}
+      <a href="#issue-{{ forloop.index }}" data-sev="{{ it.severity | default: 3 }}">
+        <span class="toc__no">{{ forloop.index | prepend: "0" | slice: -2, 2 }}</span>
+        <span class="toc__t">{{ it.title | escape }}</span>
+        <span class="chip chip--sev">{{ it.region | escape }}·{{ it.category | escape }}</span>
+      </a>
+      {%- endfor -%}
+    </nav>
+    {%- endif -%}
+  </div>
+</section>
+
+{%- if page.items -%}
+<div class="wrap story">
+  <nav class="rail" aria-label="이슈 바로가기">
+    {%- for it in page.items -%}
+    <a href="#issue-{{ forloop.index }}" data-sev="{{ it.severity | default: 3 }}">{{ forloop.index | prepend: "0" | slice: -2, 2 }}</a>
+    {%- endfor -%}
+  </nav>
+
+  <div class="issues">
+    {%- for it in page.items -%}
+    {%- assign n = forloop.index | prepend: "0" | slice: -2, 2 -%}
+    {%- assign sev = it.severity | default: 3 -%}
+    <article class="issue" id="issue-{{ forloop.index }}" data-sev="{{ sev }}" aria-labelledby="issue-{{ forloop.index }}-t">
+      <header class="issue__head">
+        <span class="issue__no" aria-hidden="true">{{ n }}</span>
+        <div class="chips">
+          <span class="chip">{{ it.region | escape }}</span>
+          <span class="chip chip--sev">{{ it.category | escape }} · 위험도 {{ sev }}/5</span>
+        </div>
+        <h2 class="issue__title" id="issue-{{ forloop.index }}-t">{{ it.title | escape }}</h2>
+      </header>
+
+      {%- assign has_fig = false -%}{%- if it.key_figure and it.key_figure != "" -%}{%- assign has_fig = true -%}{%- endif -%}
+      {%- assign has_cve = false -%}{%- if it.cve and it.cve != "" -%}{%- assign has_cve = true -%}{%- endif -%}
+      {%- if has_fig or has_cve or it.cvss > 0 -%}
+      <div class="facts" data-reveal>
+        {%- if has_fig -%}
+        <div class="fact"><span class="fact__k">Key figure</span><b class="fact__v">{{ it.key_figure | escape }}</b><span class="fact__l">{{ it.key_figure_label | escape }}</span></div>
+        {%- endif -%}
+        {%- if has_cve -%}
+        <div class="fact"><span class="fact__k">CVE</span><b class="fact__v mono">{{ it.cve | escape }}</b>
+          <a class="fact__l" href="https://nvd.nist.gov/vuln/detail/{{ it.cve | escape }}" target="_blank" rel="noopener noreferrer nofollow">NVD에서 보기 ↗</a></div>
+        {%- endif -%}
+        {%- if it.cvss > 0 -%}
+        <div class="fact"><span class="fact__k">CVSS</span><b class="fact__v">{{ it.cvss }}</b>
+          <span class="meter" data-v="{{ it.cvss | round }}" aria-label="CVSS {{ it.cvss }} / 10"><i></i></span></div>
+        {%- endif -%}
+      </div>
+      {%- endif -%}
+
+      <div class="blocks">
+        <section class="block block--core" data-reveal>
+          <h3 class="block__k"><span class="mono">01</span> 핵심</h3>
+          <p class="block__v" data-terms>{{ it.core | escape }}</p>
+        </section>
+        <section class="block block--background" data-reveal>
+          <h3 class="block__k"><span class="mono">02</span> 배경</h3>
+          <p class="block__v" data-terms>{{ it.background | escape }}</p>
+        </section>
+        <section class="block block--impact" data-reveal>
+          <h3 class="block__k"><span class="mono">03</span> 영향</h3>
+          <p class="block__v" data-terms>{{ it.impact | escape }}</p>
+        </section>
+      </div>
+
+      {%- if it.link and it.link != "" -%}
+      <p class="source">출처 <a href="{{ it.link | escape }}" target="_blank" rel="noopener noreferrer nofollow">{{ it.source | escape }} ↗</a></p>
+      {%- endif -%}
+    </article>
+    {%- endfor -%}
+  </div>
+</div>
+
+{%- if page.terms and page.terms.size > 0 -%}
+<section class="section" aria-labelledby="terms-h">
+  <div class="wrap">
+    <div class="section__head">
+      <div><p class="section__k">Glossary</p><h2 class="section__title" id="terms-h">오늘의 보안 용어</h2></div>
+      <a class="section__aside" href="{{ '/glossary/' | relative_url }}">전체 용어 사전 →</a>
+    </div>
+    <div class="terms">
+      {%- for t in page.terms -%}
+      <div class="tcard" data-reveal>
+        <p class="tcard__t">{{ t.term | escape }}</p>
+        <p class="tcard__e">{{ t.english | escape }}</p>
+        <p class="tcard__d">{{ t.definition | escape }}</p>
+      </div>
+      {%- endfor -%}
+    </div>
+  </div>
+</section>
+<script type="application/json" id="terms-data">{{ page.terms | jsonify | replace: "</", "<\/" }}</script>
+{%- endif -%}
+
+{%- else -%}
+{%- comment -%} 구조화 데이터가 없는 예전 형식 글 {%- endcomment -%}
+<div class="wrap page-body"><div class="prose">{{ content }}</div></div>
+{%- endif -%}
+
+<section class="section">
+  <div class="wrap pager">
+    {%- if page.previous -%}
+    <a href="{{ page.previous.url | relative_url }}"><span>← PREVIOUS</span>{{ page.previous.date | date: "%Y.%m.%d" }} 브리핑</a>
+    {%- else -%}<a class="is-empty" aria-hidden="true" tabindex="-1" href="#main"><span></span></a>{%- endif -%}
+    {%- if page.next -%}
+    <a href="{{ page.next.url | relative_url }}"><span>NEXT →</span>{{ page.next.date | date: "%Y.%m.%d" }} 브리핑</a>
+    {%- else -%}<a class="is-empty" aria-hidden="true" tabindex="-1" href="#main"><span></span></a>{%- endif -%}
+  </div>
+</section>

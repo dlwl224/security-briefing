@@ -63,28 +63,89 @@ def post_path(date: str) -> str:
     return f"/briefing/{date}/"
 
 
+CVE_RE = re.compile(r"^CVE-\d{4}-\d{4,7}$")
+
+
+def plain(s: object, max_len: int) -> str:
+    """front matter 용 평문: 제어문자 제거 + 공백 정리 + 길이 제한.
+    HTML 이스케이프는 하지 않는다 — 레이아웃에서 반드시 `| escape` 로 출력한다."""
+    s = re.sub(r"[\x00-\x1f\x7f]", " ", str(s or ""))
+    return re.sub(r"\s+", " ", s).strip()[:max_len]
+
+
 def normalize(entry: dict) -> dict:
     """AI 출력의 값을 허용된 범위로 강제한다."""
+    try:
+        severity = min(5, max(1, int(entry.get("severity") or 3)))
+    except (TypeError, ValueError):
+        severity = 3
+    try:
+        cvss = round(min(10.0, max(0.0, float(entry.get("cvss") or 0))), 1)
+    except (TypeError, ValueError):
+        cvss = 0.0
+    cve = plain(entry.get("cve"), 20).upper()
     return {
         **entry,
         "category": entry.get("category") if entry.get("category") in CATEGORIES else "위협동향",
         "region": entry.get("region") if entry.get("region") in REGIONS else "해외",
+        "severity": severity,
+        "cvss": cvss,
+        "cve": cve if CVE_RE.match(cve) else "",
     }
 
 
-def write_post(date: str, entries: list[dict], terms: list[dict]) -> Path:
+def structured_item(e: dict) -> dict:
+    """레이아웃이 그릴 구조화 데이터 (모두 평문, 출력 시 escape)."""
+    return {
+        "title": plain(e["title"], 200),
+        "region": e["region"],
+        "category": e["category"],
+        "severity": e["severity"],
+        "core": plain(e["core"], 1200),
+        "background": plain(e["background"], 1500),
+        "impact": plain(e["impact"], 1200),
+        "key_figure": plain(e.get("key_figure"), 16),
+        "key_figure_label": plain(e.get("key_figure_label"), 30),
+        "cve": e["cve"],
+        "cvss": e["cvss"],
+        "source": plain(e.get("source"), 50),
+        "link": safe_url(e.get("link")),
+    }
+
+
+def issue_number(date: str) -> int:
+    """이 브리핑이 몇 번째인지 (오늘 이전 포스트 수 + 1)."""
+    if not POSTS.exists():
+        return 1
+    return 1 + sum(1 for p in POSTS.glob("*-security-briefing.md") if p.name[:10] < date)
+
+
+def write_post(date: str, entries: list[dict], terms: list[dict], summary: str = "") -> Path:
     if not DATE_RE.match(date):
         raise ValueError(f"잘못된 날짜: {date}")
     entries = [normalize(e) for e in entries]
     regions = [e["region"] for e in entries]
     plain_titles = " / ".join(re.sub(r"[\s{}]+", " ", str(e["title"]))[:80] for e in entries)[:300]
+    items = [structured_item(e) for e in entries]
+    term_items = [
+        {"term": plain(t.get("term"), 60), "english": plain(t.get("english"), 80),
+         "definition": plain(t.get("definition"), 400)}
+        for t in terms
+    ]
+    threat = round(sum(e["severity"] for e in entries) / len(entries)) if entries else 1
+    dump = lambda v: json.dumps(v, ensure_ascii=False)
     lines = [
         "---",
-        "layout: post",
-        f"title: {json.dumps(f'🔐 {date} 보안 이슈 브리핑', ensure_ascii=False)}",
+        "layout: briefing",
+        f"title: {dump(f'{date} 보안 이슈 브리핑')}",
         f"date: {date} 09:00:00 +0900",
-        f"tags: {json.dumps(sorted({e['category'] for e in entries}), ensure_ascii=False)}",
-        f"description: {json.dumps(html.escape(plain_titles), ensure_ascii=False)}",
+        f"issue_no: {issue_number(date)}",
+        f"threat_level: {threat}",
+        f"summary: {dump(plain(summary, 120))}",
+        f"tags: {dump(sorted({e['category'] for e in entries}))}",
+        f"description: {dump(html.escape(plain_titles))}",
+        f"items: {dump(items)}",
+        f"terms: {dump(term_items)}",
         "---",
         "",
         f"> 오늘의 주요 보안 이슈 {len(entries)}건 "

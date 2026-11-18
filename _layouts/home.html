@@ -1,0 +1,139 @@
+---
+layout: default
+---
+{%- comment -%}
+  보안: 포스트의 items/terms 는 AI·RSS 에서 온 값이므로 출력할 때 항상 | escape 를 붙인다.
+{%- endcomment -%}
+{%- assign latest = site.posts | first -%}
+{%- assign total_issues = 0 -%}
+{%- for p in site.posts -%}{%- assign total_issues = total_issues | plus: p.items.size -%}{%- endfor -%}
+
+{%- if latest -%}
+{%- assign no = latest.issue_no | default: site.posts.size | prepend: "00" | slice: -3, 3 -%}
+<section class="hero">
+  <div class="hero__ghost" aria-hidden="true">{{ latest.date | date: "%m.%d" }}</div>
+  <div class="wrap hero__inner">
+    <p class="hero__meta mono">
+      <span class="live">LIVE</span><span class="dot"></span>
+      <span>No.{{ no }}</span><span class="dot"></span>
+      <span>{{ latest.date | date: "%Y.%m.%d" }} 09:00 KST</span>
+    </p>
+    <h1 class="hero__title">{% if latest.summary and latest.summary != "" %}{{ latest.summary | escape }}{% else %}오늘의 보안 이슈 브리핑{% endif %}</h1>
+    <p class="hero__sub">국내·해외 보안 뉴스에서 오늘 가장 중요한 이슈 {{ latest.items.size | default: 5 }}건을 골라 핵심·배경·영향으로 정리했습니다.</p>
+    {% include threat.html level=latest.threat_level %}
+    <div class="hero__actions">
+      <a class="btn" href="{{ latest.url | relative_url }}">오늘 브리핑 읽기 <span class="arrow" aria-hidden="true">→</span></a>
+      <a class="btn btn--ghost" href="#archive">지난 브리핑</a>
+    </div>
+  </div>
+</section>
+
+{%- if latest.items -%}
+<section class="section" aria-labelledby="today-h">
+  <div class="wrap">
+    <div class="section__head">
+      <div><p class="section__k">Today's top {{ latest.items.size }}</p><h2 class="section__title" id="today-h">오늘의 주요 이슈</h2></div>
+      <p class="section__aside mono">{{ latest.date | date: "%Y-%m-%d" }}</p>
+    </div>
+
+    {%- assign kr = latest.items | where: "region", "국내" | size -%}
+    {%- assign gl = latest.items | where: "region", "해외" | size -%}
+    <div class="bento">
+      {%- for it in latest.items -%}
+      {%- assign n = forloop.index | prepend: "0" | slice: -2, 2 -%}
+      <a class="card{% if forloop.first %} card--lead{% elsif forloop.index == 5 %} card--wide{% endif %}" data-sev="{{ it.severity | default: 3 }}" data-spot
+         href="{{ latest.url | relative_url }}#issue-{{ forloop.index }}">
+        <span class="card__bignum" aria-hidden="true">{{ n }}</span>
+        <div class="card__top">
+          <span class="card__no">{{ n }}</span>
+          <span class="chips">
+            <span class="chip">{{ it.region | escape }}</span>
+            <span class="chip chip--sev">{{ it.category | escape }}</span>
+          </span>
+        </div>
+        {%- if it.key_figure and it.key_figure != "" -%}
+        <div class="card__figure"><b>{{ it.key_figure | escape }}</b><span>{{ it.key_figure_label | escape }}</span></div>
+        {%- elsif it.cve and it.cve != "" -%}
+        <div class="card__figure card__figure--cve"><b class="mono">{{ it.cve | escape }}</b><span>{% if it.cvss > 0 %}CVSS {{ it.cvss }}{% else %}CVE ID{% endif %}</span></div>
+        {%- endif -%}
+        <h3 class="card__title">{{ it.title | escape }}</h3>
+        {%- if forloop.first -%}<p class="card__text">{{ it.core | escape }}</p>{%- endif -%}
+        <div class="card__foot">
+          {%- if it.key_figure and it.key_figure != "" and it.cve and it.cve != "" -%}<span class="chip chip--cve">{{ it.cve | escape }}</span>{%- else -%}<span></span>{%- endif -%}
+          <span class="card__go" aria-hidden="true">↗</span>
+        </div>
+      </a>
+      {%- if forloop.index == 3 -%}
+      <div class="card card--stat">
+        <p class="section__k">Region split</p>
+        <div class="split">
+          <div class="split__bar" aria-hidden="true"><span data-n="{{ kr }}"></span><span data-n="{{ gl }}"></span></div>
+          <div class="split__legend"><span>국내 <b>{{ kr }}</b></span><span>해외 <b>{{ gl }}</b></span></div>
+        </div>
+      </div>
+      {%- endif -%}
+      {%- endfor -%}
+      {%- if latest.terms and latest.terms.size > 0 -%}
+      <a class="card card--wide card--stat" href="{{ latest.url | relative_url }}#terms-h" data-spot>
+        <p class="section__k">Today's glossary · {{ latest.terms.size }} terms</p>
+        <div class="chips chips--lg">
+          {%- for t in latest.terms -%}<span class="chip">{{ t.term | escape }}</span>{%- endfor -%}
+        </div>
+        <div class="card__foot"><span class="section__aside">본문 속 용어에 마우스를 올리면 풀이가 나옵니다</span><span class="card__go" aria-hidden="true">↗</span></div>
+      </a>
+      {%- endif -%}
+    </div>
+  </div>
+</section>
+{%- endif -%}
+{%- endif -%}
+
+<section class="section" aria-labelledby="stats-h">
+  <div class="wrap">
+    <div class="section__head">
+      <div><p class="section__k">Track record</p><h2 class="section__title" id="stats-h">매일, 빠짐없이</h2></div>
+    </div>
+    <div class="bento">
+      <div class="card card--stat"><p class="stat__v"><span data-count="{{ site.posts.size }}" data-streak>{{ site.posts.size }}</span><small>일</small></p><p class="stat__k">연속 발행</p></div>
+      <div class="card card--stat"><p class="stat__v"><span data-count="{{ site.posts.size }}">{{ site.posts.size }}</span><small>회</small></p><p class="stat__k">누적 브리핑</p></div>
+      <div class="card card--stat"><p class="stat__v"><span data-count="{{ total_issues }}">{{ total_issues }}</span><small>건</small></p><p class="stat__k">정리한 보안 이슈</p></div>
+      <div class="card card--stat"><p class="stat__v"><span data-count="{{ site.data.glossary.size }}">{{ site.data.glossary.size }}</span><small>개</small></p><p class="stat__k">쌓인 보안 용어</p></div>
+      <div class="card card--wide card--stat">
+        <p class="section__k">Publishing heatmap · 26 weeks</p>
+        <div class="heat" data-heatmap><div class="heat__grid" role="list" aria-label="날짜별 발행 기록"></div></div>
+        <div class="heat__legend" aria-hidden="true">
+          낮음 <span class="heat__cell" data-sev="1"></span><span class="heat__cell" data-sev="2"></span><span class="heat__cell" data-sev="3"></span><span class="heat__cell" data-sev="4"></span><span class="heat__cell" data-sev="5"></span> 심각
+        </div>
+      </div>
+      <a class="card card--wide card--stat" href="{{ '/about/' | relative_url }}" data-spot>
+        <p class="section__k">How it works</p>
+        <p class="card__title">RSS 수집 → AI 선정·요약 → 정적 사이트 배포 → Discord 알림까지, 사람 손 없이 매일 09:00에 돌아갑니다.</p>
+        <div class="card__foot"><span class="mono section__aside">GitHub Actions · Gemini · Jekyll</span><span class="card__go" aria-hidden="true">↗</span></div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="archive" aria-labelledby="archive-h">
+  <div class="wrap">
+    <div class="section__head">
+      <div><p class="section__k">Archive</p><h2 class="section__title" id="archive-h">지난 브리핑</h2></div>
+      <p class="section__aside">{{ site.posts.size }} issues</p>
+    </div>
+    <div class="archive">
+      {%- for p in site.posts -%}
+      {%- assign pno = p.issue_no | default: forloop.rindex | prepend: "00" | slice: -3, 3 -%}
+      <a class="row" href="{{ p.url | relative_url }}">
+        <span class="row__no">No.{{ pno }}</span>
+        <span class="row__date">{{ p.date | date: "%Y.%m.%d" }}</span>
+        <span class="row__title">{% if p.summary and p.summary != "" %}{{ p.summary | escape }}{% else %}{{ p.title | escape }}{% endif %}</span>
+        <span class="row__dots" aria-label="이슈별 위험도">{% for it in p.items %}<i data-sev="{{ it.severity | default: 3 }}"></i>{% endfor %}</span>
+        <span class="card__go" aria-hidden="true">↗</span>
+      </a>
+      {%- endfor -%}
+    </div>
+  </div>
+</section>
+
+{%- comment -%} 히트맵·연속발행 계산용 데이터 (실행되지 않는 JSON 블록, </ 는 이스케이프) {%- endcomment -%}
+<script type="application/json" id="archive-data">[{%- for p in site.posts -%}{"d":{{ p.date | date: "%Y-%m-%d" | jsonify }},"s":{{ p.threat_level | default: 1 | jsonify }},"u":{{ p.url | relative_url | jsonify | replace: "</", "<\/" }}}{% unless forloop.last %},{% endunless %}{%- endfor -%}]</script>

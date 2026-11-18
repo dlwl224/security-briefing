@@ -1,0 +1,14 @@
+---
+layout: default
+---
+<section class="hero post-hero">
+  <div class="hero__ghost" aria-hidden="true">{{ page.ghost | default: page.title | escape }}</div>
+  <div class="wrap hero__inner">
+    {%- if page.kicker -%}<p class="hero__meta mono">{{ page.kicker | escape }}</p>{%- endif -%}
+    <h1 class="hero__title">{{ page.title | escape }}</h1>
+    {%- if page.lead -%}<p class="hero__sub">{{ page.lead | escape }}</p>{%- endif -%}
+  </div>
+</section>
+<div class="wrap page-body">
+  {{ content }}
+</div>

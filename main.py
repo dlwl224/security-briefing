@@ -50,6 +50,7 @@ def main() -> int:
             for c in picked
         ]
         terms = [{"term": "드라이런", "english": "Dry run", "definition": "실제로 실행하기 전에 동작만 시험해 보는 것."}]
+        summary = "[dry-run] AI 요약 없이 만든 시험용 브리핑"
     else:
         result = llm.summarize(picked)
         entries = []
@@ -58,10 +59,11 @@ def main() -> int:
                 src = picked[s["index"]]
                 entries.append({**s, "region": src["region"], "source": src["source"], "link": src["link"]})
         terms = result.get("terms", [])
+        summary = result.get("daily_summary", "")
         if not entries:
             raise RuntimeError("요약 결과가 비어 있음")
 
-    path = render.write_post(date, entries, terms)
+    path = render.write_post(date, entries, terms, summary)
     added = render.update_glossary(date, terms)
     print(f"[info] 포스트 작성: {path.relative_to(ROOT)} / 새 용어 {added}개")
 
@@ -74,6 +76,7 @@ def main() -> int:
         "url": render.site_url() + render.post_path(date),
         "items": [{k: e[k] for k in ("title", "region", "category", "core", "link")} for e in entries],
         "terms": [t["term"] for t in terms],
+        "summary": summary,
     }, ensure_ascii=False, indent=2), encoding="utf-8")
     return 0
 
