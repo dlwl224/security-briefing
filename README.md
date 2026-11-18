@@ -61,7 +61,7 @@ GitHub Actions (cron: 매일 00:00 UTC = 09:00 KST, 비용 0원)
  │    국내: 보안뉴스 · 데일리시큐 · KISA 보호나라
  │    해외: The Hacker News · BleepingComputer · SecurityWeek · The Record
  │    CVE : CISA KEV (실제 악용 중인 취약점 목록)
- │    → 최근 36시간 기사, 이미 다룬 링크(data/seen.json)·중복 제목 제외
+ │    → 최근 36시간 기사, 이미 다룬 링크(state/seen.json)·중복 제목 제외
  │
  ├─ 2. 선정  briefing/llm.py  (Gemini API 무료 티어)
  │    중요도 + 국내/해외 균형 + 취약점/사고/정책 분야 균형으로 5건

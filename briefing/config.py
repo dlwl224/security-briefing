@@ -10,7 +10,7 @@ POSTS_DIR = ROOT / "_posts"
 DATA_DIR = ROOT / "_data"
 COMMENTS_DIR = DATA_DIR / "comments"
 GLOSSARY_FILE = DATA_DIR / "glossary.json"
-STATE_DIR = ROOT / "data"
+STATE_DIR = ROOT / "state"
 SEEN_FILE = STATE_DIR / "seen.json"
 OUT_FILE = ROOT / ".briefing_out.json"
 
