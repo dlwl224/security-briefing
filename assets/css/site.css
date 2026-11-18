@@ -590,3 +590,4 @@ a.chip--map:hover { background: var(--ink); color: var(--bg); }
 .note__v { font-size: 16px; line-height: 1.75; white-space: pre-line; }
 .note--hero { max-width: 640px; text-align: left; }
 .chip--p1 { background: var(--sev-5); color: #fff; }
+.note__k span { font-weight: 400; color: var(--ink-3); margin-left: 6px; font-size: 11px; }

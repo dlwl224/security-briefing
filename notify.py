@@ -100,7 +100,7 @@ def main() -> int:
         embed["url"] = data["url"]
     comment_url = str(data.get("comment_url") or "")
     if comment_url.startswith("https://github.com/") and comment_url.endswith(".yml"):
-        embed["description"] += f"\n✍️ **[컨설턴트 코멘트 쓰기]({comment_url})** — 이슈별 의견을 남기면 사이트에 표시돼요"
+        embed["description"] += f"\n📝 **[분석 노트 쓰기]({comment_url})** — 1건만 골라 2~3문장이면 충분해요"
     if data.get("terms"):
         embed["footer"] = {"text": "📚 오늘의 용어: " + ", ".join(data["terms"])}
     send({"username": "보안 브리핑", "embeds": [embed]})

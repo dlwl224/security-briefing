@@ -6,7 +6,7 @@ layout: default
   링크는 생성 단계(render.safe_url)에서 http(s)만 통과시키고, 여기서도 escape.
 {%- endcomment -%}
 {%- assign no = page.issue_no | default: 1 | prepend: "00" | slice: -3, 3 -%}
-{%- comment -%} 사람이 쓴 컨설턴트 코멘트: _data/comments/YYYY-MM-DD.yml {%- endcomment -%}
+{%- comment -%} 사람이 쓴 분석 노트: _data/comments/YYYY-MM-DD.yml {%- endcomment -%}
 {%- assign dkey = page.date | date: "%Y-%m-%d" -%}
 {%- assign cm = site.data.comments[dkey] -%}
 {%- assign day_note = "" -%}{%- if cm -%}{%- assign day_note = cm.summary | default: "" | strip -%}{%- endif -%}
@@ -22,7 +22,7 @@ layout: default
     <h1 class="hero__title">{% if page.summary and page.summary != "" %}{{ page.summary | escape }}{% else %}{{ page.title | escape }}{% endif %}</h1>
     {% include threat.html level=page.threat_level %}
     {%- if day_note != "" -%}
-    <blockquote class="note note--hero"><p class="note__k">🧑‍💼 오늘의 총평 · 컨설턴트 코멘트</p><p class="note__v">{{ day_note | escape }}</p></blockquote>
+    <blockquote class="note note--hero"><p class="note__k">📝 오늘의 분석 노트 <span>보안 컨설턴트 지망생의 관점</span></p><p class="note__v">{{ day_note | escape }}</p></blockquote>
     {%- endif -%}
 
     {%- if page.items -%}
@@ -139,7 +139,7 @@ layout: default
         </section>
       </div>
 
-      {%- comment -%} ===== 컨설팅 뷰: 우선순위(규칙) · 권고 조치(AI 초안) · 매핑 · 컨설턴트 코멘트(사람) ===== {%- endcomment -%}
+      {%- comment -%} ===== 컨설팅 뷰: 우선순위(규칙) · 권고 조치(AI 초안) · 매핑 · 분석 노트(사람) ===== {%- endcomment -%}
       {%- assign ck = "issue" | append: forloop.index -%}
       {%- assign note = "" -%}{%- if cm -%}{%- assign note = cm[ck] | default: "" | strip -%}{%- endif -%}
       {%- assign has_map = false -%}
@@ -150,7 +150,7 @@ layout: default
 
         {%- if note != "" -%}
         <blockquote class="note">
-          <p class="note__k">🧑‍💼 컨설턴트 코멘트</p>
+          <p class="note__k">📝 분석 노트 <span>보안 컨설턴트 지망생의 관점</span></p>
           <p class="note__v">{{ note | escape }}</p>
         </blockquote>
         {%- endif -%}

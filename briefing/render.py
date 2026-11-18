@@ -255,7 +255,7 @@ COMMENTS = ROOT / "_data" / "comments"
 
 
 def write_comment_template(date: str, entries: list[dict]) -> Path:
-    """컨설턴트 코멘트 빈 양식을 만든다 (이미 있으면 사람이 쓴 내용을 지키기 위해 건드리지 않음)."""
+    """분석 노트 빈 양식을 만든다 (이미 있으면 사람이 쓴 내용을 지키기 위해 건드리지 않음)."""
     if not DATE_RE.match(date):
         raise ValueError(f"잘못된 날짜: {date}")
     COMMENTS.mkdir(parents=True, exist_ok=True)
@@ -263,14 +263,50 @@ def write_comment_template(date: str, entries: list[dict]) -> Path:
     if path.exists():
         return path
     lines = [
-        f"# {date} 브리핑 — 컨설턴트 코멘트",
-        "# 쓰는 법: 따옴표 안에 의견을 적고 [Commit changes] 를 누르면 1~2분 뒤 사이트에 반영됩니다.",
-        "# 비워 두면 사이트에 표시되지 않습니다. 따옴표(\")를 쓰려면 \\\" 로 적으세요.",
+        f"# ============================================================",
+        f"#  {date} 브리핑 — 📝 분석 노트",
+        f"# ============================================================",
+        "#",
+        "# ▶ 쓰는 법",
+        "#   따옴표 \"\" 안에 적고 아래 [Commit changes] 를 누르면 1~2분 뒤 사이트에 표시됩니다.",
+        "#   비워 둔 칸은 표시되지 않아요. 하루 1건, 2~3문장이면 충분합니다.",
+        "#   (문장 안에 큰따옴표를 쓰려면 \\\" 로 적기)",
+        "#",
+        "# ▶ 아래 세 질문 중 하나만 골라 답해 보세요",
+        "#   ① 국내라면?      해외 사건을 우리 기업·기관 환경에 대입하면 어떤가",
+        "#   ② 무엇이 실패했나? 어떤 통제(ISMS-P 항목 등)가 약해서 생긴 일인가",
+        "#   ③ 지표가 말하는 것은? CVSS·EPSS·KEV 를 함께 보면 무엇이 보이나",
+        "#   모르면 질문으로 남겨도 좋아요 → 예) \"~가 왜 ~인지 아직 모르겠다. 이번 주 공부 주제.\"",
+        "#",
+        "# ▶ 이렇게 쓰면 좋아요",
+        "#   ✅ \"~일 것 같다. 왜냐하면 ~\"  (추측과 근거를 나눠서)",
+        "#   ❌ AI 요약 다시 쓰기 / \"매우 위험하다\" 같은 일반론 / 확인 안 된 단정",
+        "#",
+        "# ▶ 예시",
+        "#   issue2: \"국내 금융·공공은 자바 기반 시스템이 많아 영향이 클 것 같다. 외부에 열린 Jenkins·Jira 부터 확인해야 할 듯.\"",
+        "#   issue5: \"CVSS 9.9 인데 EPSS 는 0.69%로 낮다. 그런데도 KEV 등재 → 점수보다 '실제 악용'을 먼저 봐야 하는 사례.\"",
+        "# ============================================================",
         "",
-        'summary: ""   # 오늘의 총평 (홈 화면에도 표시)',
+        'summary: ""   # 오늘 하루를 한 문장으로 (선택, 홈 화면에도 표시)',
+        "",
     ]
     for i, e in enumerate(entries, 1):
-        lines.append(f'issue{i}: ""    # {i:02d}. {plain(e.get("title"), 60)}')
+        hint = []
+        try:
+            it = structured_item(normalize(e))
+            if it["priority"]:
+                hint.append(it["priority"])
+            if it["kev"]:
+                hint.append("KEV 실제 악용")
+            if it["cvss"]:
+                hint.append(f"CVSS {it['cvss']:g}")
+            hint.append(f"{it['region']}·{it['category']}")
+        except Exception:
+            pass
+        tag = f"  [{' · '.join(hint)}]" if hint else ""
+        lines.append(f"# {i:02d}. {plain(e.get('title'), 60)}{tag}")
+        lines.append(f'issue{i}: ""')
+        lines.append("")
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return path
 
