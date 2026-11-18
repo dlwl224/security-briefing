@@ -54,12 +54,12 @@
 
 보안 테스트(`tests/`, 26개)는 매일 실행 전에 자동으로 돌아가며, 실패하면 게시하지 않습니다. 코드가 바뀌거나 매주 한 번 CodeQL·pip-audit 이 추가로 검사합니다.
 
-## 계정 보안 체크리스트 (직접 설정)
+## 계정 보안 체크리스트
 
 - [ ] GitHub 계정 **2단계 인증(2FA)** 켜기 — Settings → Password and authentication
-- [ ] 저장소 Settings → Code security 에서 **Secret scanning / Push protection** 켜져 있는지 확인
+- [x] 저장소 Settings → Code security 에서 **Secret scanning / Push protection** 켜져 있는지 확인
 - [ ] 저장소 Settings → Actions → General → Workflow permissions 를 **Read repository contents** 로 (워크플로 파일에서 필요한 권한만 따로 부여함)
-- [ ] Discord 웹훅 URL, Gemini 키를 다른 곳(채팅, 메모, 코드)에 붙여넣지 않기
+- [x] Discord 웹훅 URL, Gemini 키를 다른 곳(채팅, 메모, 코드)에 붙여넣지 않기
 
 ## 🚨 사고 대응 절차
 
