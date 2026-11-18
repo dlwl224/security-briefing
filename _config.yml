@@ -10,7 +10,7 @@ plugins:
 
 exclude:
   - briefing/
-  - data/
+  - state/
   - pyproject.toml
   - docs/
   - requirements.txt

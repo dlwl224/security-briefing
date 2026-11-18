@@ -25,12 +25,36 @@ briefing/                 ← 파이썬 코드는 전부 이 패키지 안에 (�
 tests/                    단위·보안 테스트 (네트워크 없이 실행)
 _layouts/ _includes/ assets/   사이트(Jekyll) 화면
 _posts/ _data/            사이트 데이터 (봇이 쓰는 곳 + 사람이 쓰는 분석 노트)
-data/                     내부 상태 (사이트에 나가지 않음)
+state/                    봇의 내부 상태 — 이미 다룬 기사 목록 등 (사이트에 나가지 않음)
 docs/                     문서 (사이트에 나가지 않음)
 ```
 
 **의존 방향**: `__main__ → pipeline → (collect, llm, enrich, consulting, render, refresh) → (netsafe, fileio, config, models)`
 아래쪽 모듈은 위쪽 모듈을 import 하지 않는다. 새 기능은 역할에 맞는 모듈에 넣고, `pipeline.py` 에는 흐름만 추가한다.
+
+### 폴더·파일 이름 규칙
+
+| 대상 | 규칙 | 예 |
+|---|---|---|
+| 일반 폴더 | **소문자**, 단어 구분이 필요하면 하이픈 대신 **밑줄** | `state/`, `docs/`, `assets/css/` |
+| 파이썬 패키지·모듈 | 소문자 `snake_case` (하이픈 금지 — `import` 가 안 됨) | `briefing/`, `netsafe.py` |
+| 테스트 파일 | `test_<대상모듈>.py` | `tests/test_netsafe.py` |
+| `_` 로 시작하는 폴더 | **Jekyll 전용 이름** — 직접 만들거나 이름을 바꾸지 않는다 | `_posts/` `_layouts/` `_includes/` `_data/` |
+| 점(`.`)으로 시작 | 도구 설정 (GitHub·에디터·git) | `.github/`, `.editorconfig` |
+| 브리핑 글 | `_posts/YYYY-MM-DD-security-briefing.md` (Jekyll 규칙: 날짜로 시작) | `_posts/2026-11-18-security-briefing.md` |
+| 분석 노트 | `_data/comments/YYYY-MM-DD.yml` | `_data/comments/2026-11-18.yml` |
+| 사이트 데이터 | `_data/<이름>.json` 또는 `.yml` (사이트에서 `site.data.<이름>` 으로 읽힘) | `_data/isms_p.json` |
+| 문서 | 대문자 `.md` 는 저장소 대표 문서, 그 외는 `docs/` | `README.md`, `SECURITY.md`, `docs/CONVENTIONS.md` |
+
+**헷갈리기 쉬운 두 폴더**
+
+| | `_data/` | `state/` |
+|---|---|---|
+| 누가 읽나 | 사이트(Jekyll) | 봇(파이썬)만 |
+| 공개 여부 | 페이지에 내용이 표시됨 | 사이트에 나가지 않음 (`_config.yml` exclude) |
+| 들어 있는 것 | 용어 사전, 분석 노트, 허용 목록, 지표 설명 | 이미 다룬 기사 목록(`seen.json`) |
+
+새 폴더를 만들 때는 **이름만 보고 역할을 알 수 있게** 짓고, 위 1장 구조도와 이 표에 함께 추가한다.
 
 ---
 
