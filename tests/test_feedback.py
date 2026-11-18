@@ -8,7 +8,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-import feedback  # noqa: E402
+from briefing import feedback  # noqa: E402
 
 
 class FeedbackTest(unittest.TestCase):

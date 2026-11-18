@@ -1,23 +1,21 @@
 """매일 보안 이슈 브리핑 생성: 수집 → 선정 → 본문 수집 → 요약 → 포스트 작성.
 
 사용법:
-  python main.py            # 실제 실행 (GEMINI_API_KEY 필요)
-  python main.py --dry-run  # AI 없이 수집만 테스트하고 RSS 요약으로 임시 포스트 생성
+  python -m briefing daily            # 실제 실행 (GEMINI_API_KEY 필요)
+  python -m briefing daily --dry-run  # AI 없이 수집만 테스트하고 RSS 요약으로 임시 포스트 생성
 """
 import json
-import sys
 from datetime import datetime
-from pathlib import Path
 
-from briefing import collect, config, enrich, refresh, render
+from . import collect, config, enrich, refresh, render
 
-ROOT = Path(__file__).resolve().parent
-SEEN = ROOT / "data" / "seen.json"
-OUT = ROOT / ".briefing_out.json"   # notify.py 가 읽는 결과 (커밋 안 함)
+ROOT = config.ROOT
+SEEN = config.SEEN_FILE
+OUT = config.OUT_FILE
 
 
-def main() -> int:
-    dry = "--dry-run" in sys.argv
+def run(dry: bool = False) -> int:
+    """매일 브리핑 생성: (최근 글 지표 갱신) → 수집 → 선정 → 본문 수집 → 요약 → 공식 지표 보강 → 포스트 작성."""
     date = datetime.now(config.KST).strftime("%Y-%m-%d")
     seen = json.loads(SEEN.read_text(encoding="utf-8")) if SEEN.exists() else []
 
@@ -92,6 +90,3 @@ def main() -> int:
     }, ensure_ascii=False, indent=2), encoding="utf-8")
     return 0
 
-
-if __name__ == "__main__":
-    sys.exit(main())

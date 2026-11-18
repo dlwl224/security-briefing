@@ -1,7 +1,18 @@
-"""수집할 피드 목록과 공통 설정."""
+"""공통 설정: 경로, 수집 대상, 한도값. 숫자·경로를 코드 곳곳에 흩어 두지 않고 여기서만 바꾼다."""
 from datetime import timedelta, timezone
+from pathlib import Path
 
 KST = timezone(timedelta(hours=9))
+
+# ---- 경로 ---------------------------------------------------------------
+ROOT = Path(__file__).resolve().parent.parent
+POSTS_DIR = ROOT / "_posts"              # 발행된 브리핑 (Jekyll)
+DATA_DIR = ROOT / "_data"                # 사이트가 읽는 데이터
+COMMENTS_DIR = DATA_DIR / "comments"     # 사람이 쓰는 분석 노트
+GLOSSARY_FILE = DATA_DIR / "glossary.json"
+STATE_DIR = ROOT / "data"                # 사이트에 안 나가는 내부 상태
+SEEN_FILE = STATE_DIR / "seen.json"
+OUT_FILE = ROOT / ".briefing_out.json"   # daily → notify 로 넘기는 결과 (커밋 안 함)
 
 # region: "국내" / "해외"
 RSS_FEEDS = [

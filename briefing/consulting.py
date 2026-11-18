@@ -5,9 +5,10 @@
 """
 import json
 import re
-from pathlib import Path
 
-DATA = Path(__file__).resolve().parent.parent / "_data"
+from . import config
+
+DATA = config.DATA_DIR
 
 
 def _load(name: str) -> dict:

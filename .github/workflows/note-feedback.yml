@@ -42,4 +42,4 @@ jobs:
           GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           DISCORD_FEEDBACK_WEBHOOK_URL: ${{ secrets.DISCORD_FEEDBACK_WEBHOOK_URL }}   # 선택: 피드백 전용 채널
-        run: python feedback.py
+        run: python -m briefing feedback

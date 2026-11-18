@@ -11,8 +11,8 @@ plugins:
 exclude:
   - briefing/
   - data/
-  - main.py
-  - notify.py
+  - pyproject.toml
+  - docs/
   - requirements.txt
   - README.md
   - SECURITY.md

@@ -9,8 +9,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-import notify  # noqa: E402
-from briefing import render  # noqa: E402
+from briefing import notify, render  # noqa: E402
 
 EVIL = (
     '<script>alert(1)</script> [클릭](javascript:alert(1)) ![x](https://evil/x.png) '

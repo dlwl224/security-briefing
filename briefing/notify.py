@@ -1,18 +1,19 @@
 """디스코드 웹훅으로 오늘 브리핑 알림을 보낸다.
 
-  python notify.py            # 오늘 브리핑 알림
-  python notify.py --failed   # 실행 실패 알림
+  python -m briefing notify            # 오늘 브리핑 알림
+  python -m briefing notify --failed   # 실행 실패 알림
 """
 import json
 import os
 import re
 import sys
 import time
-from pathlib import Path
 
 import requests
 
-OUT = Path(__file__).resolve().parent / ".briefing_out.json"
+from . import config
+
+OUT = config.OUT_FILE
 WEBHOOK = os.getenv("DISCORD_WEBHOOK_URL", "")
 EMOJI = {"취약점": "🛠️", "사고": "🚨", "정책": "📜", "위협동향": "📡"}
 
@@ -55,8 +56,9 @@ def wait_until_live(url: str, max_wait: int = 420) -> None:
     print("[warn] 페이지가 아직 안 열림 — 그래도 알림은 보냄")
 
 
-def main() -> int:
-    if "--failed" in sys.argv:
+def run(failed: bool = False) -> int:
+    """오늘 브리핑 알림 (failed=True 면 실행 실패 알림)."""
+    if failed:
         run = f"{os.getenv('GITHUB_SERVER_URL')}/{os.getenv('GITHUB_REPOSITORY')}/actions/runs/{os.getenv('GITHUB_RUN_ID')}"
         send({"embeds": [{
             "title": "⚠️ 오늘 보안 브리핑 생성 실패",
@@ -106,6 +108,3 @@ def main() -> int:
     send({"username": "보안 브리핑", "embeds": [embed]})
     return 0
 
-
-if __name__ == "__main__":
-    sys.exit(main())

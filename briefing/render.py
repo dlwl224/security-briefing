@@ -14,11 +14,11 @@ import re
 from pathlib import Path
 from urllib.parse import urlparse
 
-from . import consulting
+from . import config, consulting
 
-ROOT = Path(__file__).resolve().parent.parent
-POSTS = ROOT / "_posts"
-GLOSSARY = ROOT / "_data" / "glossary.json"
+ROOT = config.ROOT
+POSTS = config.POSTS_DIR
+GLOSSARY = config.GLOSSARY_FILE
 
 CATEGORIES = {"취약점": "🛠️", "사고": "🚨", "정책": "📜", "위협동향": "📡"}
 REGIONS = {"국내", "해외"}
@@ -267,7 +267,7 @@ def write_post(date: str, entries: list[dict], terms: list[dict], summary: str =
     return path
 
 
-COMMENTS = ROOT / "_data" / "comments"
+COMMENTS = config.COMMENTS_DIR
 
 
 def write_comment_template(date: str, entries: list[dict]) -> Path:

@@ -4,22 +4,19 @@
 - 기준: 위험분석 4단계 ① 자산·노출 ② 위협·취약점 ③ 가능성·영향 ④ 대응 권고
 
 사용 (GitHub Actions 가 자동 실행):
-  BEFORE=<이전 커밋> AFTER=<새 커밋> python feedback.py
-  python feedback.py --dry-run 2026-11-18     # 로컬 테스트: 해당 날짜 노트 전부, AI 없이 출력만
+  BEFORE=<이전 커밋> AFTER=<새 커밋> python -m briefing feedback
+  python -m briefing feedback --dry-run 2026-11-18   # 로컬 테스트: 해당 날짜 노트 전부, AI 없이 출력만
 """
 import json
 import os
 import re
 import subprocess
-import sys
-from pathlib import Path
 
 import yaml
 
-import notify
-from briefing import llm
+from . import config, llm, notify
 
-ROOT = Path(__file__).resolve().parent
+ROOT = config.ROOT
 SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 FILE_RE = re.compile(r"^_data/comments/(\d{4}-\d{2}-\d{2})\.yml$")
 KEY_RE = re.compile(r"^(summary|issue[1-9])$")
@@ -145,10 +142,11 @@ def to_embed(note: dict, item: dict | None, fb: dict) -> dict:
             "footer": {"text": "AI 코칭 · 사이트에는 내가 쓴 글만 게시됩니다"}}
 
 
-def main() -> int:
-    dry = "--dry-run" in sys.argv
+def run(dry_date: str | None = None) -> int:
+    """새로 쓴 분석 노트에 AI 코칭을 보낸다. dry_date 를 주면 그 날짜 노트 전체를 AI 없이 출력만."""
+    dry = dry_date is not None
     if dry:
-        date = sys.argv[-1]
+        date = dry_date
         if not re.match(r"^\d{4}-\d{2}-\d{2}$", date):
             raise SystemExit("날짜 형식: YYYY-MM-DD")
         data = load_yaml((ROOT / "_data/comments" / f"{date}.yml").read_text(encoding="utf-8"))
@@ -171,6 +169,3 @@ def main() -> int:
         notify.send({"username": "분석 노트 코치", "embeds": embeds[i:i + 5]})
     return 0
 
-
-if __name__ == "__main__":
-    sys.exit(main())

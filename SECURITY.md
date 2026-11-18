@@ -14,7 +14,7 @@
 | # | 항목 | 이 프로젝트에서의 의미 | 대응 | 검증 |
 |---|---|---|---|---|
 | A01 | 접근 통제 실패 | 저장소·워크플로 권한 남용 | 워크플로 기본 권한 `{}`, 필요한 job 에만 `contents: write`. 브랜치 보호(강제 push·삭제 금지) | 워크플로 파일 |
-| A02 | 암호화 실패 | 평문 전송, 비밀값 노출 | 모든 외부 요청 HTTPS, GitHub Pages HTTPS 강제, CSP `upgrade-insecure-requests`. 비밀값은 Secrets, URL·로그에 안 남김 | `notify.py` 오류 메시지에 웹후크 URL 미포함 |
+| A02 | 암호화 실패 | 평문 전송, 비밀값 노출 | 모든 외부 요청 HTTPS, GitHub Pages HTTPS 강제, CSP `upgrade-insecure-requests`. 비밀값은 Secrets, URL·로그에 안 남김 | `briefing/notify.py` 오류 메시지에 웹후크 URL 미포함 |
 | A03 | 인젝션 (SQLi·XSS·템플릿) | **SQL**: DB 없음 → 해당 없음. **XSS**: RSS/AI 텍스트에 스크립트. **템플릿**: Liquid·YAML 조작 | 출력 시 HTML 이스케이프, 마크다운 링크 무력화, Liquid `{{ }}` 치환, front matter 는 JSON 으로 기록, JS 는 `textContent` 만 사용 (`innerHTML` 미사용), CSP `script-src 'self'` | `test_security.py` (악성 입력, 템플릿 escape 정적 검사), CodeQL |
 | A04 | 안전하지 않은 설계 | 프롬프트 인젝션, AI 환각, 클릭재킹 | 기사 본문은 '데이터'로 취급하도록 지시, AI 가 쓴 CVE 는 NVD 로 실존 검증, AI 판단에는 'AI 평가' 라벨, iframe 삽입 차단 | `test_enrich.py` |
 | A05 | 보안 설정 오류 | 외부 스크립트·CDN, 과도한 노출 | 외부 스크립트/폰트 0개, 엄격한 CSP, `referrer` 정책, 불필요한 파일은 사이트 빌드에서 제외(`_config.yml` exclude) | 브라우저 콘솔 CSP 위반 0건 |

@@ -45,7 +45,7 @@ GitHub Pages 블로그에 자동 게시한 뒤 **Discord로 알림**을 보내�
    issue2: "국내 금융권은 이 제품 사용률이 높아 대외 서비스부터 점검 권고"
    ```
 3. **Commit changes** → 1~2분 뒤 사이트에 표시됩니다. 비워 둔 항목은 표시되지 않습니다.
-4. 커밋하면 **AI 코칭이 디스코드로** 옵니다 (`feedback.py`, `note-feedback.yml`).
+4. 커밋하면 **AI 코칭이 디스코드로** 옵니다 (`briefing/feedback.py`, `note-feedback.yml`).
    위험분석 4단계(① 자산·노출 ② 위협·취약점 ③ 가능성·영향 ④ 대응 권고) 중 무엇을 다뤘는지, 잘한 점·보강할 점·사실 확인·생각해 볼 질문을 알려줍니다.
    AI 는 글을 고치지 않으며 사이트에는 내가 쓴 글만 게시됩니다.
    피드백을 다른 비공개 채널로 받고 싶으면 Secret `DISCORD_FEEDBACK_WEBHOOK_URL` 을 추가하세요 (없으면 기본 채널).
@@ -74,7 +74,7 @@ GitHub Actions (cron: 매일 00:00 UTC = 09:00 KST, 비용 0원)
  │
  ├─ 4. 게시  briefing/render.py → _posts/*.md 커밋 → GitHub Pages(Jekyll) 자동 배포
  │
- └─ 5. 알림  notify.py → 페이지 배포 완료를 기다렸다가 Discord 웹훅 전송
+ └─ 5. 알림  briefing/notify.py → 페이지 배포 완료를 기다렸다가 Discord 웹훅 전송
               (실패하면 실패 알림 전송)
 ```
 
@@ -86,8 +86,10 @@ GitHub Actions (cron: 매일 00:00 UTC = 09:00 KST, 비용 0원)
 | `briefing/enrich.py` | NVD·EPSS·KEV 로 CVE 검증 및 공식 지표 보강 |
 | `briefing/render.py` | 마크다운 포스트·용어 사전 생성 |
 | `_data/metrics.yml` | CVE·CVSS·EPSS·KEV·위험도 설명 문구 (사이트 ⓘ 툴팁·About) |
-| `main.py` | 전체 파이프라인 실행 |
-| `notify.py` | Discord 알림 |
+| `briefing/__main__.py` | 실행 진입점: `python -m briefing daily / notify / feedback` |
+| `briefing/pipeline.py` | 매일 파이프라인 (수집 → 요약 → 검증 → 게시) |
+| `briefing/notify.py` | Discord 알림 |
+| `briefing/feedback.py` | 분석 노트 AI 코칭 |
 | `.github/workflows/daily-briefing.yml` | 매일 9시 자동 실행 |
 
 ---
@@ -151,6 +153,6 @@ GitHub Actions (cron: 매일 00:00 UTC = 09:00 KST, 비용 0원)
   이 봇은 매일 커밋하므로 보통 문제없지만, 꺼졌다면 Actions 탭에서 다시 켜면 됩니다.
 - **무료 한도**: 하루 Gemini 호출은 2번뿐이라 무료 한도 안에 넉넉히 들어갑니다.
   모델이 바뀌거나 사라지면 `llm.py`가 다음 모델로 자동 전환하며, Secrets/Variables에 `GEMINI_MODEL`을 지정할 수도 있습니다.
-- **로컬 테스트**: `pip install -r requirements.txt` 후 `python main.py --dry-run` → AI 없이 수집과 글 생성만 시험해 봅니다.
+- **로컬 테스트**: `pip install -r requirements.txt` 후 `python -m briefing daily --dry-run` → AI 없이 수집과 글 생성만 시험해 봅니다.
 - **저작권**: 기사 원문은 옮기지 않고, 요약과 출처 링크만 게시합니다.
 - 소스 추가·변경은 `briefing/config.py`의 `RSS_FEEDS`를 수정하면 됩니다.
