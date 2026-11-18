@@ -48,7 +48,6 @@ GitHub Actions (cron: 매일 00:00 UTC = 09:00 KST, 비용 0원)
 ### 1) GitHub 저장소 만들고 코드 올리기
 
 1. GitHub에서 **New repository** → 이름 예: `security-briefing` → **Public** 선택
-   (Public이어야 Actions·Pages가 무료입니다)
 2. 이 폴더에서:
    ```bash
    git add .
