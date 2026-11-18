@@ -14,6 +14,8 @@ import re
 from pathlib import Path
 from urllib.parse import urlparse
 
+from . import consulting
+
 ROOT = Path(__file__).resolve().parent.parent
 POSTS = ROOT / "_posts"
 GLOSSARY = ROOT / "_data" / "glossary.json"
@@ -143,6 +145,21 @@ def structured_item(e: dict) -> dict:
         "source": plain(e.get("source"), 50),
         "link": safe_url(e.get("link")),
         **metrics(e),
+        **consulting_view(e),
+    }
+
+
+def consulting_view(e: dict) -> dict:
+    """컨설팅 관점: 조치 우선순위(규칙), CVSS 벡터 해석, CWE(NVD), ISMS-P·ATT&CK(AI 제안, 허용 목록 검증), 권고 조치(AI 초안)."""
+    m = metrics(e)
+    pr = consulting.priority({**e, **m})
+    return {
+        **pr,
+        "cvss_factors": consulting.decode_vector(m["cvss_vector"]),
+        "cwe": consulting.clean_cwes(e.get("cwe")) if e["cve"] else [],
+        "isms": consulting.clean_codes(e.get("isms"), consulting.ISMS_P, 3),
+        "attack": consulting.clean_codes(e.get("attack"), consulting.ATTACK, 3),
+        "actions": consulting.clean_actions(e.get("actions")),
     }
 
 
@@ -232,6 +249,39 @@ def write_post(date: str, entries: list[dict], terms: list[dict], summary: str =
     path = POSTS / f"{date}-security-briefing.md"
     path.write_text("\n".join(lines), encoding="utf-8")
     return path
+
+
+COMMENTS = ROOT / "_data" / "comments"
+
+
+def write_comment_template(date: str, entries: list[dict]) -> Path:
+    """컨설턴트 코멘트 빈 양식을 만든다 (이미 있으면 사람이 쓴 내용을 지키기 위해 건드리지 않음)."""
+    if not DATE_RE.match(date):
+        raise ValueError(f"잘못된 날짜: {date}")
+    COMMENTS.mkdir(parents=True, exist_ok=True)
+    path = COMMENTS / f"{date}.yml"
+    if path.exists():
+        return path
+    lines = [
+        f"# {date} 브리핑 — 컨설턴트 코멘트",
+        "# 쓰는 법: 따옴표 안에 의견을 적고 [Commit changes] 를 누르면 1~2분 뒤 사이트에 반영됩니다.",
+        "# 비워 두면 사이트에 표시되지 않습니다. 따옴표(\")를 쓰려면 \\\" 로 적으세요.",
+        "",
+        'summary: ""   # 오늘의 총평 (홈 화면에도 표시)',
+    ]
+    for i, e in enumerate(entries, 1):
+        lines.append(f'issue{i}: ""    # {i:02d}. {plain(e.get("title"), 60)}')
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return path
+
+
+def comment_edit_url(date: str) -> str:
+    """GitHub 웹에서 코멘트 파일을 바로 편집하는 주소."""
+    repo = os.getenv("GITHUB_REPOSITORY", "")
+    if "/" not in repo or not DATE_RE.match(date):
+        return ""
+    server = os.getenv("GITHUB_SERVER_URL", "https://github.com").rstrip("/")
+    return f"{server}/{repo}/edit/main/_data/comments/{date}.yml"
 
 
 def update_glossary(date: str, terms: list[dict]) -> int:

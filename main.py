@@ -74,6 +74,7 @@ def main() -> int:
 
     path = render.write_post(date, entries, terms, summary)
     added = render.update_glossary(date, terms)
+    render.write_comment_template(date, entries)
     print(f"[info] 포스트 작성: {path.relative_to(ROOT)} / 새 용어 {added}개")
 
     seen = (seen + [e["link"] for e in entries])[-config.SEEN_KEEP:]
@@ -87,6 +88,7 @@ def main() -> int:
                    "cve": e.get("cve", ""), "cvss": e.get("cvss", 0), "kev": bool(e.get("kev"))} for e in entries],
         "terms": [t["term"] for t in terms],
         "summary": summary,
+        "comment_url": render.comment_edit_url(date),
     }, ensure_ascii=False, indent=2), encoding="utf-8")
     return 0
 

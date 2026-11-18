@@ -86,3 +86,43 @@ class EnrichFlowTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ConsultingTest(unittest.TestCase):
+    def test_decode_vector(self):
+        from briefing import consulting
+        f = consulting.decode_vector("CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:H/A:H")
+        texts = [x["v"] for x in f]
+        self.assertIn("원격(인터넷) 공격 가능", texts)
+        self.assertIn("공격 조건 까다로움", texts)
+        self.assertIn("로그인 불필요", texts)
+        self.assertEqual(consulting.decode_vector("<script>"), [])
+        self.assertEqual(consulting.decode_vector("AV:N/AC:L/Au:N/C:C/I:C/A:C"), [])   # v2 는 해석 안 함
+
+    def test_priority_rules(self):
+        from briefing import consulting
+        P = lambda **k: consulting.priority({"cve": "CVE-2026-1", **k})["priority"]
+        self.assertEqual(P(kev=True, cvss=4.0), "P1")              # 실제 악용이면 점수와 무관하게 즉시
+        self.assertEqual(P(epss=12, cvss=5.0), "P1")
+        self.assertEqual(P(cvss=8.1, epss=0.7), "P2")
+        self.assertEqual(P(cvss=5.0, epss=0.2), "P3")
+        self.assertEqual(consulting.priority({"cve": ""})["priority"], "")
+
+    def test_mapping_whitelist_blocks_hallucination(self):
+        from briefing import consulting
+        self.assertEqual(consulting.clean_codes(["2.10.8", "9.9.9", "<b>", "2.10.8"], consulting.ISMS_P), ["2.10.8"])
+        self.assertEqual(consulting.clean_codes(["t1190", "T9999", "T1195.002"], consulting.ATTACK), ["T1190", "T1195.002"])
+        self.assertEqual(consulting.clean_cwes(["CWE-502", "NVD-CWE-Other", "CWE-<x>"]), ["CWE-502"])
+        self.assertEqual(consulting.clean_actions(["a\nb", "", 3]), ["a b", "3"])
+
+    def test_comment_template_does_not_overwrite(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as d, mock.patch.object(render, "COMMENTS", Path(d)):
+            p = render.write_comment_template("2099-01-01", [{"title": "제목\n# 주입"}])
+            self.assertIn('issue1: ""', p.read_text(encoding="utf-8"))
+            self.assertNotIn("\n# 주입", p.read_text(encoding="utf-8"))   # 제목 개행으로 YAML 조작 불가
+            p.write_text('issue1: "사람이 쓴 코멘트"\n', encoding="utf-8")
+            render.write_comment_template("2099-01-01", [{"title": "x"}])
+            self.assertIn("사람이 쓴 코멘트", p.read_text(encoding="utf-8"))
+            with self.assertRaises(ValueError):
+                render.write_comment_template("../../x", [])

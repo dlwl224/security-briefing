@@ -33,7 +33,6 @@
       </a>
       <nav class="nav__group nav__group--end" aria-label="보조 메뉴">
         <a class="nav__link" href="{{ '/about/' | relative_url }}">How it works</a>
-        <a class="nav__link" href="{{ '/feed.xml' | relative_url }}">RSS</a>
       </nav>
     </div>
   </header>
@@ -46,6 +45,7 @@
     <div class="footer__inner">
       <p class="footer__brand"><span class="mark mark--sm" aria-hidden="true">SB</span> Daily Security Briefing</p>
       <p class="footer__note">공개된 보안 뉴스를 AI로 요약해 매일 09:00 KST 자동 발행합니다. 정확한 내용은 각 출처 원문을 확인하세요.</p>
+      <p class="footer__links"><a href="https://github.com/dlwl224/security-briefing" rel="noopener noreferrer">GitHub 저장소</a> · <a href="{{ '/feed.xml' | relative_url }}" title="Feedly 같은 구독 앱에 이 주소를 넣으면 새 글을 자동으로 받아볼 수 있어요">RSS 구독 주소</a></p>
       <p class="footer__meta mono">Static · No trackers · CSP strict · Built with GitHub Actions</p>
     </div>
   </footer>

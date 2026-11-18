@@ -116,7 +116,6 @@ p { margin: 0; }
 .nav__mark:hover .mark { transform: rotate(-8deg) scale(1.08); }
 .mark--sm { width: 22px; height: 22px; font-size: 9px; border-radius: 6px; display: inline-grid; vertical-align: -5px; margin-right: 6px; }
 @media (max-width: 640px) {
-  .nav__group--end .nav__link:last-child { display: none; }
   .nav__group { font-size: 13px; }
 }
 
@@ -447,6 +446,8 @@ a.heat__cell:hover, a.heat__cell:focus-visible { transform: scale(1.5); }
 .footer__brand { font-weight: 700; }
 .footer__note { color: var(--ink-2); font-size: 14px; max-width: 60ch; }
 .footer__meta { color: var(--ink-3); font-size: 11px; }
+.footer__links { font-size: 13px; color: var(--ink-3); }
+.footer__links a { color: var(--ink-2); border-bottom: 1px solid var(--line-2); }
 
 /* =========================================================
    REVEAL (JS가 화면 밖 요소에만 적용 → 깜빡임 없음)
@@ -546,3 +547,46 @@ a.heat__cell:hover, a.heat__cell:focus-visible { transform: scale(1.5); }
 .scale { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-top: 6px; }
 .scale span { display: grid; gap: 2px; padding: 10px; border-radius: 10px; color: #fff; font-size: 12px; font-weight: 700; background: var(--cv); }
 .scale span small { font: 500 11px var(--mono); opacity: .9; }
+
+/* =========================================================
+   CONSULTING VIEW
+   ========================================================= */
+.factors { margin: 18px 0 4px; }
+.factors__k { font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.factors__k .mono { font-size: 11px; font-weight: 400; color: var(--ink-3); }
+.factors__list { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.factor { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 10px; background: var(--surface); box-shadow: inset 0 0 0 1px var(--line-2); font-size: 13px; }
+.factor span { font-size: 11px; color: var(--ink-3); }
+.factor--bad { box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--sev-5) 55%, transparent); background: color-mix(in srgb, var(--sev-5) 7%, var(--surface)); }
+.factor--bad b { color: var(--sev-5); }
+.factor--ok b { color: var(--ink-2); font-weight: 600; }
+
+.consult { margin-top: 28px; padding: 24px; border-radius: var(--radius); background: var(--surface); box-shadow: var(--shadow); display: grid; gap: 18px; }
+.consult__k { font-size: 11px; color: var(--ink-3); letter-spacing: .06em; }
+.consult__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px 28px; }
+.consult__h { font-size: 13px; font-weight: 700; color: var(--ink-2); display: flex; align-items: center; gap: 6px; margin-bottom: 10px; }
+.tag-ai, .tag-ok { display: inline-flex; align-items: center; height: 20px; padding: 0 8px; border-radius: 99px; font: 600 10.5px/1 var(--sans); letter-spacing: 0; }
+.tag-ai { color: var(--ink-3); box-shadow: inset 0 0 0 1px var(--line-2); }
+.tag-ok { color: #1f8a4c; box-shadow: inset 0 0 0 1px color-mix(in srgb, #1f8a4c 40%, transparent); }
+
+.prio { --pc: var(--sev-1); }
+.prio[data-prio="P1"] { --pc: var(--sev-5); }
+.prio[data-prio="P2"] { --pc: var(--sev-3); }
+.prio__v { font-size: 22px; font-weight: 750; letter-spacing: -.03em; color: var(--pc); }
+.prio__v b { display: inline-grid; place-items: center; min-width: 40px; height: 30px; padding: 0 8px; margin-right: 6px; border-radius: 8px; background: var(--pc); color: #fff; font: 800 15px/1 var(--mono); vertical-align: 3px; }
+.prio__d { font-size: 13px; color: var(--ink-2); margin-top: 4px; }
+.prio__why { margin: 10px 0 0; padding-left: 18px; font-size: 13px; color: var(--ink-2); }
+
+.todo ol { margin: 0; padding-left: 20px; display: grid; gap: 6px; font-size: 14.5px; line-height: 1.6; }
+.map { grid-column: 1 / -1; display: grid; gap: 10px; }
+.map__row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.map__k { font: 600 11px/1 var(--mono); color: var(--ink-3); min-width: 76px; display: inline-flex; align-items: center; gap: 4px; }
+.chip--map { height: 28px; font-weight: 550; color: var(--ink); background: var(--surface-2); }
+a.chip--map { transition: background .2s, color .2s; }
+a.chip--map:hover { background: var(--ink); color: var(--bg); }
+
+.note { margin: 0; padding: 18px 20px; border-radius: 14px; background: color-mix(in srgb, var(--sev-3) 8%, var(--surface)); box-shadow: inset 3px 0 0 var(--sev-3); }
+.note__k { font-size: 12px; font-weight: 700; color: var(--ink-2); margin-bottom: 6px; }
+.note__v { font-size: 16px; line-height: 1.75; white-space: pre-line; }
+.note--hero { max-width: 640px; text-align: left; }
+.chip--p1 { background: var(--sev-5); color: #fff; }

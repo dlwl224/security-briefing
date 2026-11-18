@@ -103,10 +103,16 @@ class TemplateEscapeTest(unittest.TestCase):
                  + [self.ROOT / "glossary.md", self.ROOT / "about.md"])
         bad = []
         for f in files:
-            for m in re.finditer(r"\{\{-?\s*((?:it|t|p|m|latest|page)\.[\w.]+)([^}]*)\}\}", f.read_text(encoding="utf-8")):
-                var, filters = m.group(1), m.group(2)
-                field = var.split(".")[1]
-                if field in self.SAFE_FIELDS or var.endswith(".size"):
+            text = f.read_text(encoding="utf-8")
+            # (1) 객체 필드 출력: it.title, t.term, f.v, cm[ck], site.data.isms_p[c] ...
+            pattern = r"\{\{-?\s*((?:it|t|p|m|f|cm|latest|page|site\.data\.\w+)[.\[][\w.\[\]\"]*)([^}]*)\}\}"
+            # (2) 사람·AI 가 쓴 값을 담는 단순 변수: 코멘트(note, day_note), 매핑 코드(c), 근거(r), 권고(a)
+            bare = r"\{\{-?\s*(note|day_note|c|r|a)\b()([^}]*)\}\}"
+            for m in list(re.finditer(pattern, text)) + list(re.finditer(bare, text)):
+                var, filters = m.group(1), m.group(m.lastindex)
+                parts = re.split(r"[.\[]", var)
+                field = parts[1] if len(parts) > 1 else var
+                if field in self.SAFE_FIELDS or var.endswith(".size") or var.startswith("site.data.metrics"):
                     continue
                 if "escape" not in filters and "jsonify" not in filters:
                     bad.append(f"{f.name}: {m.group(0)}")

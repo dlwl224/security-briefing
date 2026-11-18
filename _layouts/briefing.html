@@ -6,6 +6,10 @@ layout: default
   링크는 생성 단계(render.safe_url)에서 http(s)만 통과시키고, 여기서도 escape.
 {%- endcomment -%}
 {%- assign no = page.issue_no | default: 1 | prepend: "00" | slice: -3, 3 -%}
+{%- comment -%} 사람이 쓴 컨설턴트 코멘트: _data/comments/YYYY-MM-DD.yml {%- endcomment -%}
+{%- assign dkey = page.date | date: "%Y-%m-%d" -%}
+{%- assign cm = site.data.comments[dkey] -%}
+{%- assign day_note = "" -%}{%- if cm -%}{%- assign day_note = cm.summary | default: "" | strip -%}{%- endif -%}
 
 <section class="hero post-hero">
   <div class="hero__ghost" aria-hidden="true">{{ page.date | date: "%m.%d" }}</div>
@@ -17,6 +21,9 @@ layout: default
     </p>
     <h1 class="hero__title">{% if page.summary and page.summary != "" %}{{ page.summary | escape }}{% else %}{{ page.title | escape }}{% endif %}</h1>
     {% include threat.html level=page.threat_level %}
+    {%- if day_note != "" -%}
+    <blockquote class="note note--hero"><p class="note__k">🧑‍💼 오늘의 총평 · 컨설턴트 코멘트</p><p class="note__v">{{ day_note | escape }}</p></blockquote>
+    {%- endif -%}
 
     {%- if page.items -%}
     <nav class="toc" aria-label="오늘의 이슈 목록">
@@ -86,7 +93,6 @@ layout: default
             {%- else -%}기사 기준 (NVD 미평가)
             {%- endif -%}
           </span>
-          {%- if it.cvss_vector != "" -%}<code class="vector" title="{{ it.cvss_vector | escape }}">{{ it.cvss_vector | escape }}</code>{%- endif -%}
         </div>
         {%- endif -%}
         {%- if it.epss > 0 -%}
@@ -107,6 +113,17 @@ layout: default
       </div>
       {%- endif -%}
 
+      {%- if it.cvss_factors and it.cvss_factors.size > 0 -%}
+      <div class="factors" data-reveal>
+        <p class="factors__k">공격 조건 분석 <span class="mono" title="{{ it.cvss_vector | escape }}">CVSS 벡터 해석</span> {% include info.html key="vector" %}</p>
+        <ul class="factors__list">
+          {%- for f in it.cvss_factors -%}
+          <li class="factor factor--{{ f.level | escape }}"><span>{{ f.k | escape }}</span><b>{{ f.v | escape }}</b></li>
+          {%- endfor -%}
+        </ul>
+      </div>
+      {%- endif -%}
+
       <div class="blocks">
         <section class="block block--core" data-reveal>
           <h3 class="block__k"><span class="mono">01</span> 핵심</h3>
@@ -121,6 +138,72 @@ layout: default
           <p class="block__v" data-terms>{{ it.impact | escape }}</p>
         </section>
       </div>
+
+      {%- comment -%} ===== 컨설팅 뷰: 우선순위(규칙) · 권고 조치(AI 초안) · 매핑 · 컨설턴트 코멘트(사람) ===== {%- endcomment -%}
+      {%- assign ck = "issue" | append: forloop.index -%}
+      {%- assign note = "" -%}{%- if cm -%}{%- assign note = cm[ck] | default: "" | strip -%}{%- endif -%}
+      {%- assign has_map = false -%}
+      {%- if it.isms.size > 0 or it.attack.size > 0 or it.cwe.size > 0 -%}{%- assign has_map = true -%}{%- endif -%}
+      {%- if it.priority != "" or it.actions.size > 0 or has_map or note != "" -%}
+      <section class="consult" data-reveal aria-label="컨설팅 뷰">
+        <p class="consult__k mono">CONSULTING VIEW</p>
+
+        {%- if note != "" -%}
+        <blockquote class="note">
+          <p class="note__k">🧑‍💼 컨설턴트 코멘트</p>
+          <p class="note__v">{{ note | escape }}</p>
+        </blockquote>
+        {%- endif -%}
+
+        <div class="consult__grid">
+          {%- if it.priority != "" -%}
+          {%- case it.priority -%}
+            {%- when "P1" -%}{%- assign pl = "즉시 조치" -%}{%- assign pd = "72시간 이내 패치·완화" -%}
+            {%- when "P2" -%}{%- assign pl = "우선 조치" -%}{%- assign pd = "2주 이내 패치" -%}
+            {%- else -%}{%- assign pl = "정기 조치" -%}{%- assign pd = "정기 패치 주기에 반영" -%}
+          {%- endcase -%}
+          <div class="prio" data-prio="{{ it.priority | escape }}">
+            <p class="consult__h">조치 우선순위 {% include info.html key="priority" %}</p>
+            <p class="prio__v"><b>{{ it.priority | escape }}</b> {{ pl }}</p>
+            <p class="prio__d">{{ pd }}</p>
+            <ul class="prio__why">{%- for r in it.priority_reasons -%}<li>{{ r | escape }}</li>{%- endfor -%}</ul>
+          </div>
+          {%- endif -%}
+
+          {%- if it.actions.size > 0 -%}
+          <div class="todo">
+            <p class="consult__h">권고 조치 <span class="tag-ai">AI 초안</span></p>
+            <ol>{%- for a in it.actions -%}<li>{{ a | escape }}</li>{%- endfor -%}</ol>
+          </div>
+          {%- endif -%}
+
+          {%- if has_map -%}
+          <div class="map">
+            <p class="consult__h">관련 기준·분류</p>
+            {%- if it.isms.size > 0 -%}
+            <p class="map__row"><span class="map__k">ISMS-P {% include info.html key="isms" %}</span>
+              {%- for c in it.isms -%}<span class="chip chip--map">{{ c | escape }} {{ site.data.isms_p[c] | escape }}</span>{%- endfor -%}
+              <span class="tag-ai">AI 제안</span></p>
+            {%- endif -%}
+            {%- if it.attack.size > 0 -%}
+            <p class="map__row"><span class="map__k">ATT&amp;CK {% include info.html key="attack" %}</span>
+              {%- for c in it.attack -%}{%- assign tpath = c | replace: ".", "/" -%}
+              <a class="chip chip--map" href="https://attack.mitre.org/techniques/{{ tpath | escape }}/" target="_blank" rel="noopener noreferrer nofollow">{{ c | escape }} {{ site.data.attack[c] | split: " · " | last | escape }}</a>
+              {%- endfor -%}
+              <span class="tag-ai">AI 제안</span></p>
+            {%- endif -%}
+            {%- if it.cwe.size > 0 -%}
+            <p class="map__row"><span class="map__k">CWE {% include info.html key="cwe" %}</span>
+              {%- for c in it.cwe -%}{%- assign cnum = c | remove: "CWE-" -%}
+              <a class="chip chip--map" href="https://cwe.mitre.org/data/definitions/{{ cnum | escape }}.html" target="_blank" rel="noopener noreferrer nofollow">{{ c | escape }}</a>
+              {%- endfor -%}
+              <span class="tag-ok">NVD 공식</span></p>
+            {%- endif -%}
+          </div>
+          {%- endif -%}
+        </div>
+      </section>
+      {%- endif -%}
 
       {%- if it.link and it.link != "" -%}
       <p class="source">출처 <a href="{{ it.link | escape }}" target="_blank" rel="noopener noreferrer nofollow">{{ it.source | escape }} ↗</a></p>

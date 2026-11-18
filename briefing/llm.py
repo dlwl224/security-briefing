@@ -5,6 +5,8 @@ import time
 
 import requests
 
+from . import consulting
+
 API = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 # 앞의 모델이 없거나 한도 초과면 다음 모델로 시도
 MODELS = [m for m in [os.getenv("GEMINI_MODEL"), "gemini-flash-latest", "gemini-2.5-flash", "gemini-flash-lite-latest"] if m]
@@ -86,9 +88,13 @@ SUMMARY_SCHEMA = {
                     "key_figure_label": {"type": "STRING"},
                     "cve": {"type": "STRING"},
                     "cvss": {"type": "NUMBER"},
+                    "isms": {"type": "ARRAY", "items": {"type": "STRING"}},
+                    "attack": {"type": "ARRAY", "items": {"type": "STRING"}},
+                    "actions": {"type": "ARRAY", "items": {"type": "STRING"}},
                 },
                 "required": ["index", "title", "category", "core", "background", "impact",
-                             "severity", "key_figure", "key_figure_label", "cve", "cvss"],
+                             "severity", "key_figure", "key_figure_label", "cve", "cvss",
+                             "isms", "attack", "actions"],
             },
         },
         "daily_summary": {"type": "STRING"},
@@ -128,6 +134,10 @@ def summarize(articles: list[dict]) -> dict:
 - cve: 기사에 나온 대표 CVE 번호 하나 (예: "CVE-2026-114938"). 없으면 빈 문자열.
 - cvss: 기사에 명시된 CVSS 점수. 없으면 0. 추측하지 마라.
 
+- isms: 이 사건을 예방·대응하는 데 관련된 ISMS-P 인증기준 번호 1~3개. 반드시 아래 [ISMS-P 허용 목록]의 번호만 쓴다 (예: "2.10.8").
+- attack: 기사에 드러난 공격 기법의 MITRE ATT&CK ID 0~3개. 반드시 아래 [ATT&CK 허용 목록]의 ID만 쓰고, 기사에서 근거를 찾을 수 없으면 빈 배열.
+- actions: 기업 보안 담당자가 지금 할 일 2~3개. 각 40자 이내의 구체적인 점검·조치 문장 (예: "외부 노출된 Jenkins 서버 목록 확인 후 패치").
+
 daily_summary: 오늘 5건을 관통하는 흐름을 한 문장(40자 내외)으로. 예: "자바 원격 실행 취약점과 공급망 공격이 동시에 번진 하루".
 
 terms (오늘의 보안 용어): 기사들에 나온 보안 용어 중 비전공자가 모를 만한 것 3~6개.
@@ -140,5 +150,5 @@ terms (오늘의 보안 용어): 기사들에 나온 보안 용어 중 비전공
 - 문체는 '~했다', '~이다' 체로 통일한다.
 - 과장이나 공포 조장 표현은 쓰지 않는다.
 
-""" + "\n\n".join(blocks)
+""" + consulting.prompt_catalog() + "\n\n" + "\n\n".join(blocks)
     return _call(prompt, SUMMARY_SCHEMA)

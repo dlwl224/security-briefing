@@ -21,6 +21,12 @@ layout: default
     <h1 class="hero__title">{% if latest.summary and latest.summary != "" %}{{ latest.summary | escape }}{% else %}오늘의 보안 이슈 브리핑{% endif %}</h1>
     <p class="hero__sub">국내·해외 보안 뉴스에서 오늘 가장 중요한 이슈 {{ latest.items.size | default: 5 }}건을 골라 핵심·배경·영향으로 정리했습니다.</p>
     {% include threat.html level=latest.threat_level %}
+    {%- assign dkey = latest.date | date: "%Y-%m-%d" -%}
+    {%- assign cm = site.data.comments[dkey] -%}
+    {%- assign day_note = "" -%}{%- if cm -%}{%- assign day_note = cm.summary | default: "" | strip -%}{%- endif -%}
+    {%- if day_note != "" -%}
+    <blockquote class="note note--hero"><p class="note__k">🧑‍💼 오늘의 총평 · 컨설턴트 코멘트</p><p class="note__v">{{ day_note | escape }}</p></blockquote>
+    {%- endif -%}
     <div class="hero__actions">
       <a class="btn" href="{{ latest.url | relative_url }}">오늘 브리핑 읽기 <span class="arrow" aria-hidden="true">→</span></a>
       <a class="btn btn--ghost" href="#archive">지난 브리핑</a>
@@ -49,7 +55,7 @@ layout: default
           <span class="chips">
             <span class="chip">{{ it.region | escape }}</span>
             <span class="chip chip--sev">{{ it.category | escape }}</span>
-            {%- if it.kev -%}<span class="chip chip--kev">KEV</span>{%- endif -%}
+            {%- if it.kev -%}<span class="chip chip--kev">KEV</span>{%- elsif it.priority == "P1" -%}<span class="chip chip--p1">P1</span>{%- endif -%}
           </span>
         </div>
         {%- if it.key_figure and it.key_figure != "" -%}

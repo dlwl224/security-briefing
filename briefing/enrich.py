@@ -57,6 +57,15 @@ def parse_nvd(data: dict) -> dict | None:
         return None
     cve = vulns[0].get("cve") or {}
     result = {"status": str(cve.get("vulnStatus", ""))[:40]}
+    # 취약점 유형(CWE) — NVD 공식 분류. 'NVD-CWE-Other' 같은 값은 버림
+    cwes = []
+    for w in cve.get("weaknesses") or []:
+        for d in (w.get("description") or []) if isinstance(w, dict) else []:
+            v = str(d.get("value", "")).upper() if isinstance(d, dict) else ""
+            if re.fullmatch(r"CWE-\d{1,5}", v) and v not in cwes:
+                cwes.append(v)
+    if cwes:
+        result["cwe"] = cwes[:3]
     metrics = cve.get("metrics") or {}
     for key, version in (("cvssMetricV31", "3.1"), ("cvssMetricV40", "4.0"), ("cvssMetricV30", "3.0"), ("cvssMetricV2", "2.0")):
         entries = [m for m in metrics.get(key) or [] if isinstance(m, dict) and isinstance(m.get("cvssData"), dict)]
