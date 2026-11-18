@@ -146,5 +146,5 @@ layout: default
   </div>
 </section>
 
-{%- comment -%} 히트맵·연속발행 계산용 데이터 (실행되지 않는 JSON 블록, </ 는 이스케이프) {%- endcomment -%}
-<script type="application/json" id="archive-data">[{%- for p in site.posts -%}{"d":{{ p.date | date: "%Y-%m-%d" | jsonify }},"s":{{ p.threat_level | default: 1 | jsonify }},"u":{{ p.url | relative_url | jsonify | replace: "</", "<\/" }}}{% unless forloop.last %},{% endunless %}{%- endfor -%}]</script>
+{%- comment -%} 히트맵·연속발행 계산용 데이터: 날짜(d)와 위협 수준(s)만. 링크 주소는 JS 가 날짜로 직접 만든다 {%- endcomment -%}
+<script type="application/json" id="archive-data">[{%- for p in site.posts -%}{"d":{{ p.date | date: "%Y-%m-%d" | jsonify }},"s":{{ p.threat_level | default: 1 | jsonify }}}{% unless forloop.last %},{% endunless %}{%- endfor -%}]</script>

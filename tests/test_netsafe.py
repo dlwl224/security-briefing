@@ -89,7 +89,9 @@ class RefreshSafetyTest(unittest.TestCase):
         item = {"cve": "CVE-2026-0002", "cve_status": "nvd", "cvss": 7.0, "cvss_source": "NVD"}
         resp = {"vulnerabilities": [{"cve": {"vulnStatus": "Rejected", "metrics": {}}}]}
         with (
-            mock.patch.object(enrich, "_get_json", side_effect=lambda url, *a, **k: resp if "nvd" in url else {}),
+            mock.patch.object(
+                enrich, "_get_json", side_effect=lambda url, *a, **k: resp if url == enrich.NVD_URL else {}
+            ),
             mock.patch.object(enrich.time, "sleep"),
         ):
             changed = enrich.enrich([item], [""], refresh=True)

@@ -76,9 +76,10 @@ class ParseTest(unittest.TestCase):
 class EnrichFlowTest(unittest.TestCase):
     def run_enrich(self, entry, text, nvd_resp):
         def fake_get(url, params, **kwargs):
-            if "nvd" in url:
+            # 부분 문자열("nvd" in url)이 아니라 정확한 주소로 비교 (CodeQL py/incomplete-url-substring-sanitization)
+            if url == enrich.NVD_URL:
                 return nvd_resp
-            if "first.org" in url:
+            if url == enrich.EPSS_URL:
                 return {"data": [{"epss": "0.5", "percentile": "0.99", "date": "2026-11-18"}]}
             return {
                 "vulnerabilities": [
