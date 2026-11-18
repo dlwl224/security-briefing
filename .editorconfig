@@ -1,0 +1,17 @@
+# 에디터 공통 설정 (VS Code, IntelliJ 등 대부분 자동 인식) — docs/CONVENTIONS.md 참고
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 2
+
+[*.py]
+indent_size = 4
+max_line_length = 120
+
+[*.md]
+trim_trailing_whitespace = false   # 마크다운 줄 끝 공백 2칸 = 줄바꿈
