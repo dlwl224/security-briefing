@@ -14,7 +14,7 @@ import re
 from pathlib import Path
 from urllib.parse import urlparse
 
-from . import config, consulting
+from . import config, consulting, fileio
 
 ROOT = config.ROOT
 POSTS = config.POSTS_DIR
@@ -263,7 +263,7 @@ def write_post(date: str, entries: list[dict], terms: list[dict], summary: str =
     ]
     POSTS.mkdir(exist_ok=True)
     path = POSTS / f"{date}-security-briefing.md"
-    path.write_text("\n".join(lines), encoding="utf-8")
+    fileio.write_text(path, "\n".join(lines))
     return path
 
 
@@ -327,7 +327,7 @@ def write_comment_template(date: str, entries: list[dict]) -> Path:
         lines.append(f"# {i:02d}. {plain(e.get('title'), 60)}{tag}")
         lines.append(f'issue{i}: ""')
         lines.append("")
-    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    fileio.write_text(path, "\n".join(lines) + "\n")
     return path
 
 
@@ -360,5 +360,5 @@ def update_glossary(date: str, terms: list[dict]) -> int:
         added += 1
     data.sort(key=lambda d: d["term"])
     GLOSSARY.parent.mkdir(exist_ok=True)
-    GLOSSARY.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+    fileio.write_json(GLOSSARY, data)
     return added

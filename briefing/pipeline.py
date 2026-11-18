@@ -7,7 +7,7 @@
 import json
 from datetime import datetime
 
-from . import collect, config, enrich, refresh, render
+from . import collect, config, enrich, fileio, refresh, render
 
 ROOT = config.ROOT
 SEEN = config.SEEN_FILE
@@ -77,9 +77,9 @@ def run(dry: bool = False) -> int:
 
     seen = (seen + [e["link"] for e in entries])[-config.SEEN_KEEP:]
     SEEN.parent.mkdir(exist_ok=True)
-    SEEN.write_text(json.dumps(seen, ensure_ascii=False, indent=0), encoding="utf-8")
+    fileio.write_json(SEEN, seen, indent=0)
 
-    OUT.write_text(json.dumps({
+    fileio.write_json(OUT, {
         "date": date,
         "url": render.site_url() + render.post_path(date),
         "items": [{**{k: e[k] for k in ("title", "region", "category", "core", "link")},
@@ -87,6 +87,6 @@ def run(dry: bool = False) -> int:
         "terms": [t["term"] for t in terms],
         "summary": summary,
         "comment_url": render.comment_edit_url(date),
-    }, ensure_ascii=False, indent=2), encoding="utf-8")
+    })
     return 0
 
