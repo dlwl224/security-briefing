@@ -591,3 +591,10 @@ a.chip--map:hover { background: var(--ink); color: var(--bg); }
 .note--hero { max-width: 640px; text-align: left; }
 .chip--p1 { background: var(--sev-5); color: #fff; }
 .note__k span { font-weight: 400; color: var(--ink-3); margin-left: 6px; font-size: 11px; }
+[data-sev="0"] { --sig: var(--ink-3); }
+.basis { grid-column: 1 / -1; display: grid; gap: 8px; }
+.basis__v { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.basis__v .chip { height: 28px; color: var(--ink); }
+.basis__eq { font-size: 15px; color: var(--ink-2); margin-left: 4px; }
+.basis__eq b { font-size: 22px; color: var(--sig); font-weight: 800; }
+.basis__note { font-size: 13.5px; color: var(--ink-2); }

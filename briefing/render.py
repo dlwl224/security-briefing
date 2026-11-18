@@ -86,14 +86,22 @@ def normalize(entry: dict) -> dict:
     except (TypeError, ValueError):
         cvss = 0.0
     cve = plain(entry.get("cve"), 20).upper()
-    return {
+    base = {
         **entry,
         "category": entry.get("category") if entry.get("category") in CATEGORIES else "위협동향",
         "region": entry.get("region") if entry.get("region") in REGIONS else "해외",
         "severity": severity,
         "cvss": cvss,
         "cve": cve if CVE_RE.match(cve) else "",
+        # 위험도 판정 요소 (AI 판정 → 허용 값만)
+        "exploitation": _pick(entry.get("exploitation"), set(consulting.EXPLOIT)),
+        "scale": _pick(entry.get("scale"), set(consulting.SCALE)),
+        "domestic": entry.get("domestic") is True,
+        "critical_sector": entry.get("critical_sector") is True,
+        "factor_note": plain(entry.get("factor_note"), 80),
     }
+    base["kev"] = bool(entry.get("kev")) and bool(base["cve"])
+    return {**base, **consulting.severity(base)}           # 위험도는 규칙으로 계산
 
 
 def _pick(v, allowed: set, default: str = "") -> str:
@@ -135,6 +143,13 @@ def structured_item(e: dict) -> dict:
         "region": e["region"],
         "category": e["category"],
         "severity": e["severity"],
+        "severity_method": e["severity_method"],
+        "severity_basis": [plain(b, 60) for b in e["severity_basis"]][:6],
+        "exploitation": e["exploitation"],
+        "scale": e["scale"],
+        "domestic": e["domestic"],
+        "critical_sector": e["critical_sector"],
+        "factor_note": e["factor_note"],
         "core": plain(e["core"], 1200),
         "background": plain(e["background"], 1500),
         "impact": plain(e["impact"], 1200),
@@ -182,7 +197,8 @@ def write_post(date: str, entries: list[dict], terms: list[dict], summary: str =
          "definition": plain(t.get("definition"), 400)}
         for t in terms
     ]
-    threat = round(sum(e["severity"] for e in entries) / len(entries)) if entries else 1
+    scored = [e["severity"] for e in entries if isinstance(e["severity"], int)]   # '참고' 기사는 평균에서 제외
+    threat = max(1, round(sum(scored) / len(scored))) if scored else 1
     dump = lambda v: json.dumps(v, ensure_ascii=False)
     lines = [
         "---",

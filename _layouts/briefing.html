@@ -28,7 +28,7 @@ layout: default
     {%- if page.items -%}
     <nav class="toc" aria-label="오늘의 이슈 목록">
       {%- for it in page.items -%}
-      <a href="#issue-{{ forloop.index }}" data-sev="{{ it.severity | default: 3 }}">
+      <a href="#issue-{{ forloop.index }}" data-sev="{{ it.severity | default: 0 }}">
         <span class="toc__no">{{ forloop.index | prepend: "0" | slice: -2, 2 }}</span>
         <span class="toc__t">{{ it.title | escape }}</span>
         <span class="chip chip--sev">{{ it.region | escape }}·{{ it.category | escape }}</span>
@@ -43,21 +43,24 @@ layout: default
 <div class="wrap story">
   <nav class="rail" aria-label="이슈 바로가기">
     {%- for it in page.items -%}
-    <a href="#issue-{{ forloop.index }}" data-sev="{{ it.severity | default: 3 }}">{{ forloop.index | prepend: "0" | slice: -2, 2 }}</a>
+    <a href="#issue-{{ forloop.index }}" data-sev="{{ it.severity | default: 0 }}">{{ forloop.index | prepend: "0" | slice: -2, 2 }}</a>
     {%- endfor -%}
   </nav>
 
   <div class="issues">
     {%- for it in page.items -%}
     {%- assign n = forloop.index | prepend: "0" | slice: -2, 2 -%}
-    {%- assign sev = it.severity | default: 3 -%}
+    {%- assign sev = it.severity | default: 0 -%}
     <article class="issue" id="issue-{{ forloop.index }}" data-sev="{{ sev }}" aria-labelledby="issue-{{ forloop.index }}-t">
       <header class="issue__head">
         <span class="issue__no" aria-hidden="true">{{ n }}</span>
         <div class="chips">
           <span class="chip">{{ it.region | escape }}</span>
           <span class="chip chip--sev">{{ it.category | escape }}</span>
-          <span class="chip chip--ai"><span>AI 평가 위험도 <b>{{ sev }}</b>/5</span>{% include info.html key="severity" %}</span>
+          {%- if sev == 0 -%}<span class="chip chip--ai"><span>참고 · 정책·동향</span>{% include info.html key="severity" %}</span>
+          {%- elsif it.severity_method == "rule" -%}<span class="chip chip--ai"><span>위험도 <b>{{ sev }}</b>/5</span>{% include info.html key="severity" %}</span>
+          {%- else -%}<span class="chip chip--ai"><span>AI 평가 위험도 <b>{{ sev }}</b>/5 (이전 방식)</span>{% include info.html key="severity" %}</span>
+          {%- endif -%}
           {%- if it.kev -%}<span class="chip chip--kev">실제 악용 확인 · KEV</span>{%- endif -%}
         </div>
         <h2 class="issue__title" id="issue-{{ forloop.index }}-t">{{ it.title | escape }}</h2>
@@ -144,7 +147,7 @@ layout: default
       {%- assign note = "" -%}{%- if cm -%}{%- assign note = cm[ck] | default: "" | strip -%}{%- endif -%}
       {%- assign has_map = false -%}
       {%- if it.isms.size > 0 or it.attack.size > 0 or it.cwe.size > 0 -%}{%- assign has_map = true -%}{%- endif -%}
-      {%- if it.priority != "" or it.actions.size > 0 or has_map or note != "" -%}
+      {%- if it.priority != "" or it.actions.size > 0 or has_map or note != "" or it.severity_basis.size > 0 -%}
       <section class="consult" data-reveal aria-label="컨설팅 뷰">
         <p class="consult__k mono">CONSULTING VIEW</p>
 
@@ -156,6 +159,17 @@ layout: default
         {%- endif -%}
 
         <div class="consult__grid">
+          {%- if it.severity_basis.size > 0 -%}
+          <div class="basis">
+            <p class="consult__h">위험도 산정 근거 {% include info.html key="severity" %}</p>
+            <p class="basis__v">
+              {%- for b in it.severity_basis -%}<span class="chip">{{ b | escape }}</span>{%- endfor -%}
+              {%- if sev > 0 -%}<span class="basis__eq">= <b>{{ sev }}</b>/5</span>{%- endif -%}
+            </p>
+            {%- if it.factor_note != "" -%}<p class="basis__note">{{ it.factor_note | escape }}</p>{%- endif -%}
+            <p><span class="tag-ai">요소는 AI 판정 · 점수는 규칙 계산</span></p>
+          </div>
+          {%- endif -%}
           {%- if it.priority != "" -%}
           {%- case it.priority -%}
             {%- when "P1" -%}{%- assign pl = "즉시 조치" -%}{%- assign pd = "72시간 이내 패치·완화" -%}

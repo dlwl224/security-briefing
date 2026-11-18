@@ -126,3 +126,44 @@ class ConsultingTest(unittest.TestCase):
             self.assertIn("사람이 쓴 코멘트", p.read_text(encoding="utf-8"))
             with self.assertRaises(ValueError):
                 render.write_comment_template("../../x", [])
+
+
+class SeverityRuleTest(unittest.TestCase):
+    """운영자와 함께 정한 위험도 규칙."""
+
+    def S(self, **k):
+        from briefing import consulting
+        return consulting.severity({"category": "사고", **k})
+
+    def test_formula(self):
+        r = self.S(exploitation="active", scale="medium", critical_sector=True, domestic=True)
+        self.assertEqual(r["severity"], 5)                    # 2+1+1+1 = 5
+        self.assertEqual(self.S(exploitation="poc", scale="unknown")["severity"], 1)
+        self.assertEqual(self.S(exploitation="none", scale="small")["severity"], 1)   # 최소 1
+        self.assertEqual(self.S(exploitation="active", scale="large", critical_sector=True, domestic=True)["severity"], 5)  # 최대 5
+        self.assertEqual(self.S(exploitation="active", scale="large")["severity"], 4)
+        self.assertEqual(r["severity_method"], "rule")
+
+    def test_kev_overrides_ai_judgment(self):
+        r = self.S(exploitation="none", scale="medium", kev=True)
+        self.assertEqual(r["severity"], 3)                    # KEV → 실제 악용 +2
+        self.assertIn("CISA KEV", r["severity_basis"][0])
+
+    def test_reference_categories(self):
+        from briefing import consulting
+        for cat in ("정책", "위협동향"):
+            self.assertIsNone(consulting.severity({"category": cat, "exploitation": "active", "scale": "large"})["severity"])
+
+    def test_invalid_factor_values_fall_back(self):
+        r = self.S(exploitation="<script>", scale="huge", severity=4)
+        self.assertEqual((r["severity"], r["severity_method"]), (4, "ai"))
+        self.assertEqual(self.S(exploitation="active", scale="small", domestic="yes")["severity"], 2)   # "yes" 는 True 아님
+
+    def test_threat_level_excludes_reference(self):
+        import tempfile
+        base = {"title": "t", "core": "c", "background": "b", "impact": "i", "region": "국내", "link": ""}
+        entries = [{**base, "category": "사고", "exploitation": "active", "scale": "large", "domestic": True},
+                   {**base, "category": "정책", "exploitation": "none", "scale": "small"}]
+        with tempfile.TemporaryDirectory() as d, mock.patch.object(render, "POSTS", Path(d)):
+            text = render.write_post("2099-01-02", entries, []).read_text(encoding="utf-8")
+        self.assertIn("threat_level: 5", text)                # 정책 기사(참고)는 평균에서 제외

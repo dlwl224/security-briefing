@@ -47,7 +47,7 @@ layout: default
     <div class="bento">
       {%- for it in latest.items -%}
       {%- assign n = forloop.index | prepend: "0" | slice: -2, 2 -%}
-      <a class="card{% if forloop.first %} card--lead{% elsif forloop.index == 5 %} card--wide{% endif %}" data-sev="{{ it.severity | default: 3 }}" data-spot
+      <a class="card{% if forloop.first %} card--lead{% elsif forloop.index == 5 %} card--wide{% endif %}" data-sev="{{ it.severity | default: 0 }}" data-spot
          href="{{ latest.url | relative_url }}#issue-{{ forloop.index }}">
         <span class="card__bignum" aria-hidden="true">{{ n }}</span>
         <div class="card__top">
@@ -138,7 +138,7 @@ layout: default
         <span class="row__no">No.{{ pno }}</span>
         <span class="row__date">{{ p.date | date: "%Y.%m.%d" }}</span>
         <span class="row__title">{% if p.summary and p.summary != "" %}{{ p.summary | escape }}{% else %}{{ p.title | escape }}{% endif %}</span>
-        <span class="row__dots" aria-label="이슈별 위험도">{% for it in p.items %}<i data-sev="{{ it.severity | default: 3 }}"></i>{% endfor %}</span>
+        <span class="row__dots" aria-label="이슈별 위험도">{% for it in p.items %}<i data-sev="{{ it.severity | default: 0 }}"></i>{% endfor %}</span>
         <span class="card__go" aria-hidden="true">↗</span>
       </a>
       {%- endfor -%}

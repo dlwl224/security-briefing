@@ -63,7 +63,7 @@ class RenderSecurityTest(unittest.TestCase):
         self.assertNotIn("해킹", self.text)
 
     def test_structured_fields_validated(self):
-        e = render.normalize({**ENTRY, "severity": "99", "cvss": "abc", "cve": "<b>CVE"})
+        e = render.normalize({**ENTRY, "category": "사고", "severity": "99", "cvss": "abc", "cve": "<b>CVE"})
         self.assertEqual((e["severity"], e["cvss"], e["cve"]), (5, 0.0, ""))
         item = render.structured_item(e)
         self.assertEqual(item["link"], "")          # javascript: 링크 제거
@@ -107,7 +107,7 @@ class TemplateEscapeTest(unittest.TestCase):
             # (1) 객체 필드 출력: it.title, t.term, f.v, cm[ck], site.data.isms_p[c] ...
             pattern = r"\{\{-?\s*((?:it|t|p|m|f|cm|latest|page|site\.data\.\w+)[.\[][\w.\[\]\"]*)([^}]*)\}\}"
             # (2) 사람·AI 가 쓴 값을 담는 단순 변수: 코멘트(note, day_note), 매핑 코드(c), 근거(r), 권고(a)
-            bare = r"\{\{-?\s*(note|day_note|c|r|a)\b()([^}]*)\}\}"
+            bare = r"\{\{-?\s*(note|day_note|c|r|a|b)\b()([^}]*)\}\}"
             for m in list(re.finditer(pattern, text)) + list(re.finditer(bare, text)):
                 var, filters = m.group(1), m.group(m.lastindex)
                 parts = re.split(r"[.\[]", var)

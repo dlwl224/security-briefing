@@ -9,10 +9,10 @@
 {%- endcase -%}
 <div class="threat" data-sev="{{ lv }}">
   <div class="threat__head">
-    <span class="threat__k mono">THREAT LEVEL · AI 평가 {% include info.html key="threat" %}</span>
+    <span class="threat__k mono">THREAT LEVEL {% include info.html key="threat" %}</span>
     <span class="threat__v"><b>{{ label }}</b> <span class="mono">{{ en }}</span></span>
   </div>
-  <div class="threat__bar" role="img" aria-label="AI 평가 위협 수준: {{ label }} (5단계 중 {{ lv }})">
+  <div class="threat__bar" role="img" aria-label="위협 수준: {{ label }} (5단계 중 {{ lv }})">
     {%- for i in (1..5) -%}<span class="threat__seg{% if i <= lv %} is-on{% endif %}"></span>{%- endfor -%}
   </div>
 </div>

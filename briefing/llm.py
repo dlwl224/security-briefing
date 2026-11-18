@@ -83,7 +83,11 @@ SUMMARY_SCHEMA = {
                     "core": {"type": "STRING"},
                     "background": {"type": "STRING"},
                     "impact": {"type": "STRING"},
-                    "severity": {"type": "INTEGER"},
+                    "exploitation": {"type": "STRING", "enum": ["none", "poc", "active"]},
+                    "scale": {"type": "STRING", "enum": ["unknown", "small", "medium", "large"]},
+                    "critical_sector": {"type": "BOOLEAN"},
+                    "domestic": {"type": "BOOLEAN"},
+                    "factor_note": {"type": "STRING"},
                     "key_figure": {"type": "STRING"},
                     "key_figure_label": {"type": "STRING"},
                     "cve": {"type": "STRING"},
@@ -93,7 +97,8 @@ SUMMARY_SCHEMA = {
                     "actions": {"type": "ARRAY", "items": {"type": "STRING"}},
                 },
                 "required": ["index", "title", "category", "core", "background", "impact",
-                             "severity", "key_figure", "key_figure_label", "cve", "cvss",
+                             "exploitation", "scale", "critical_sector", "domestic", "factor_note",
+                             "key_figure", "key_figure_label", "cve", "cvss",
                              "isms", "attack", "actions"],
             },
         },
@@ -128,7 +133,12 @@ def summarize(articles: list[dict]) -> dict:
 - core (핵심): 무슨 일이 일어났는지 2~3문장으로 짧고 정확하게. 누가, 무엇을, 언제, 규모(숫자)가 있으면 포함. CVE 번호와 CVSS 점수가 기사에 있으면 적는다.
 - background (배경): 이 일이 왜 생겼는지, 이전 경과, 기사에 나오는 낯선 용어를 쉬운 말로 풀어서 3~4문장.
 - impact (영향): 일반 사용자의 생활, 기업·산업, 경제에 왜 중요한지, 그리고 지금 할 수 있는 대응(업데이트 등)을 2~3문장.
-- severity (위험도): 1~5 정수. 5=실제 악용 중이거나 대규모 피해·국가 핵심 인프라, 4=고위험 취약점·수십만 명 이상 피해, 3=특정 조직 피해·중요 패치, 2=제한적 영향, 1=정책·동향 참고.
+- 위험도 판정 요소 (점수는 매기지 마라. 아래 사실만 기사 근거로 판정한다. 근거가 없으면 보수적으로):
+  - exploitation: "active" = 실제 공격·침해·악용이 일어났다고 기사에 명시 / "poc" = 공격 코드 공개·연구자 시연 등 가능성만 확인 / "none" = 둘 다 아님
+  - scale: 피해·영향 범위. "large" = 100만 명 이상 또는 널리 쓰이는 제품·수많은 조직 / "medium" = 10만~100만 명 또는 여러 조직 / "small" = 10만 명 미만 또는 단일 조직 / "unknown" = 기사에 규모 정보 없음
+  - critical_sector: 피해 대상이 공공·금융·의료·통신·에너지·교통 등 핵심 업종이면 true
+  - domestic: 국내 기업·기관·제품·이용자가 직접 영향을 받으면 true (해외 사건이라도 국내 사용 제품이면 true)
+  - factor_note: 위 판정의 근거를 기사에서 한 문장으로 (60자 이내, 예: "가입자 20만 5천 명 정보 유출 정황, 국내 공제기관")
 - key_figure: 기사에서 가장 상징적인 숫자 하나를 짧게 (예: "20만 5천", "9.8", "178개"). 기사에 숫자가 없으면 빈 문자열.
 - key_figure_label: 그 숫자가 무엇인지 아주 짧게 (예: "유출 의심 인원", "CVSS 점수", "감염 조직"). 숫자가 없으면 빈 문자열.
 - cve: 기사에 나온 대표 CVE 번호 하나 (예: "CVE-2026-114938"). 없으면 빈 문자열.

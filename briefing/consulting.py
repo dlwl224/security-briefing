@@ -90,6 +90,44 @@ def priority(e: dict) -> dict:
 
 
 # ---------------------------------------------------------------------------
+# 2-1) 위험도 — 운영자와 함께 정한 규칙 (AI 는 '사실'만 판정, 점수는 공식으로 계산)
+#   실제 악용: 없음 0 / 공격 가능성 공개 +1 / 실제 공격·악용 확인 +2  (KEV 등재면 자동 '확인')
+#   피해 규모: 불명·소규모 0 / 중간 +1 / 대규모 +2
+#   대상 중요도(핵심 업종) +1, 국내 관련성 +1
+#   합계를 1~5 로 자름. 정책·동향 기사는 점수 없이 '참고'.
+# ---------------------------------------------------------------------------
+EXPLOIT = {"none": (0, "악용 확인 안 됨"), "poc": (1, "공격 가능성 공개"), "active": (2, "실제 공격·악용 확인")}
+SCALE = {"unknown": (0, "규모 불명"), "small": (0, "소규모"), "medium": (1, "규모 중간"), "large": (2, "대규모")}
+REFERENCE_CATEGORIES = {"정책", "위협동향"}
+
+
+def severity(e: dict) -> dict:
+    """{'severity': 1~5 또는 None(참고), 'severity_basis': [근거...], 'severity_method': 'rule'|'ai'}"""
+    if e.get("category") in REFERENCE_CATEGORIES:
+        return {"severity": None, "severity_basis": ["정책·동향 기사 → 위험도 대신 '참고'"], "severity_method": "rule"}
+    exploit, scale = e.get("exploitation"), e.get("scale")
+    if exploit not in EXPLOIT or scale not in SCALE:
+        # 요소 판정이 없는 예전 글: 기존 AI 종합 판단 값을 그대로 쓰되 방식 표시
+        return {"severity": e.get("severity"), "severity_basis": [], "severity_method": "ai"}
+    if e.get("kev"):
+        exploit = "active"                                  # 공식 데이터가 AI 판정보다 우선
+    basis, total = [], 0
+    for table, key in ((EXPLOIT, exploit), (SCALE, scale)):
+        pts, label = table[key]
+        total += pts
+        basis.append(f"{label} +{pts}" if pts else label)
+    if e.get("kev"):
+        basis[0] += " (CISA KEV)"
+    if e.get("critical_sector") is True:
+        total += 1
+        basis.append("핵심 업종 +1")
+    if e.get("domestic") is True:
+        total += 1
+        basis.append("국내 영향 +1")
+    return {"severity": min(5, max(1, total)), "severity_basis": basis, "severity_method": "rule"}
+
+
+# ---------------------------------------------------------------------------
 # 3) 매핑 검증 — 허용 목록 밖의 값(AI 환각)은 버린다
 # ---------------------------------------------------------------------------
 def clean_codes(values, allowed: dict, limit: int = 4) -> list[str]:
