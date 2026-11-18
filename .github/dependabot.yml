@@ -1,0 +1,11 @@
+# 라이브러리·Actions에 보안 업데이트가 나오면 자동으로 PR을 만들어 준다
+version: 2
+updates:
+  - package-ecosystem: pip
+    directory: "/"
+    schedule:
+      interval: weekly
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly

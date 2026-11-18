@@ -9,6 +9,8 @@ from bs4 import BeautifulSoup
 
 from . import config
 
+MAX_PAGE_BYTES = 3_000_000
+
 session = requests.Session()
 session.headers["User-Agent"] = config.USER_AGENT
 
@@ -116,10 +118,15 @@ def fetch_article_text(item: dict) -> str:
             f"랜섬웨어 악용 여부: {v.get('knownRansomwareCampaignUse')}\nCWE: {', '.join(v.get('cwes', []))}"
         )
     try:
-        resp = session.get(item["link"], timeout=20)
-        resp.raise_for_status()
-        resp.encoding = resp.apparent_encoding if resp.encoding in (None, "ISO-8859-1") else resp.encoding
-        soup = BeautifulSoup(resp.text, "html.parser")
+        if not item["link"].startswith(("http://", "https://")):
+            return item["snippet"]
+        with session.get(item["link"], timeout=20, stream=True) as resp:
+            resp.raise_for_status()
+            if "html" not in resp.headers.get("Content-Type", "html"):
+                return item["snippet"]
+            raw = resp.raw.read(MAX_PAGE_BYTES, decode_content=True)  # 너무 큰 응답으로 인한 메모리 고갈 방지
+            enc = resp.encoding if resp.encoding not in (None, "ISO-8859-1") else None
+        soup = BeautifulSoup(raw, "html.parser", from_encoding=enc)
         for tag in soup(["script", "style", "nav", "header", "footer", "aside", "form"]):
             tag.decompose()
         root = (

@@ -5,6 +5,7 @@
 """
 import json
 import os
+import re
 import sys
 import time
 from pathlib import Path
@@ -16,7 +17,15 @@ WEBHOOK = os.getenv("DISCORD_WEBHOOK_URL", "")
 EMOJI = {"취약점": "🛠️", "사고": "🚨", "정책": "📜", "위협동향": "📡"}
 
 
+def discord_safe(s: str) -> str:
+    """AI/RSS에서 온 글자를 디스코드 마크다운으로 해석되지 않게 한다 (가짜 링크·@everyone 방지)."""
+    s = re.sub(r"\s+", " ", str(s or "")).strip()
+    s = re.sub(r"([\\*_~`|>\[\]()<#:])", r"\\\1", s)
+    return s.replace("@", "@​")
+
+
 def send(payload: dict) -> None:
+    payload["allowed_mentions"] = {"parse": []}   # 어떤 멘션(@everyone 등)도 알림으로 동작하지 않게
     if not WEBHOOK:
         print("[warn] DISCORD_WEBHOOK_URL 없음 — 보낼 내용만 출력")
         print(json.dumps(payload, ensure_ascii=False, indent=2))
@@ -59,7 +68,10 @@ def main() -> int:
     lines = []
     for i, it in enumerate(data["items"], 1):
         core = it["core"] if len(it["core"]) <= 160 else it["core"][:157] + "…"
-        lines.append(f"**{i}. {EMOJI.get(it['category'], '🔎')} [{it['region']}] {it['title']}**\n{core}")
+        lines.append(
+            f"**{i}. {EMOJI.get(it['category'], '🔎')} [{discord_safe(it['region'])}] {discord_safe(it['title'])}**\n"
+            f"{discord_safe(core)}"
+        )
     desc = "\n\n".join(lines)[:3900]
 
     embed = {

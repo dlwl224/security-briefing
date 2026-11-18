@@ -23,4 +23,6 @@ exclude:
   - notify.py
   - requirements.txt
   - README.md
+  - SECURITY.md
+  - tests/
   - .github/

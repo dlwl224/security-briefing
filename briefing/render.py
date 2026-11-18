@@ -1,13 +1,48 @@
-"""요약 결과를 Jekyll 포스트(마크다운)와 용어 사전 데이터로 만든다."""
+"""요약 결과를 Jekyll 포스트(마크다운)와 용어 사전 데이터로 만든다.
+
+보안 메모: 글 내용은 외부 RSS와 AI 출력에서 오므로 '신뢰할 수 없는 입력'으로 취급한다.
+- HTML 이스케이프 → <script> 등 저장형 XSS 차단
+- 마크다운 링크/이미지 문법 무력화 → 프롬프트 인젝션으로 피싱 링크가 삽입되는 것 차단
+- Liquid 문법 무력화 → Jekyll 템플릿 인젝션/빌드 실패 차단
+- 링크는 http(s)만 허용 → javascript: 링크 차단
+- front matter 값은 JSON 문자열로 써서 YAML 인젝션 차단
+"""
+import html
 import json
 import os
+import re
 from pathlib import Path
+from urllib.parse import urlparse
 
 ROOT = Path(__file__).resolve().parent.parent
 POSTS = ROOT / "_posts"
 GLOSSARY = ROOT / "_data" / "glossary.json"
 
-CATEGORY_EMOJI = {"취약점": "🛠️", "사고": "🚨", "정책": "📜", "위협동향": "📡"}
+CATEGORIES = {"취약점": "🛠️", "사고": "🚨", "정책": "📜", "위협동향": "📡"}
+REGIONS = {"국내", "해외"}
+DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+MD_SPECIAL = re.compile(r"([\\`*_\[\]|!#~])")
+
+
+def safe_text(s: object, max_len: int = 2000, single_line: bool = False) -> str:
+    """신뢰할 수 없는 문자열을 마크다운 본문에 안전하게 넣을 수 있게 만든다."""
+    s = str(s or "")
+    s = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]", "", s)        # 제어문자 제거
+    s = re.sub(r"\s+", " ", s) if single_line else re.sub(r"\n{2,}", "\n", s)
+    s = s.strip()[:max_len]
+    s = MD_SPECIAL.sub(r"\\\1", s)                                # 마크다운 문법 무력화 (링크·이미지·강조 등)
+    s = html.escape(s, quote=False)                               # < > & → HTML 태그 삽입 차단
+    s = s.replace("{", "&#123;").replace("}", "&#125;")           # Liquid 무력화
+    return s.replace("\n", "  \n")
+
+
+def safe_url(url: object) -> str:
+    """http(s) URL만 허용하고, 마크다운 링크를 깨뜨리는 문자를 인코딩한다."""
+    url = str(url or "").strip()
+    p = urlparse(url)
+    if p.scheme not in ("http", "https") or not p.netloc:
+        return ""
+    return url.replace(" ", "%20").replace("(", "%28").replace(")", "%29").replace("<", "%3C").replace(">", "%3E")
 
 
 def site_url() -> str:
@@ -28,19 +63,28 @@ def post_path(date: str) -> str:
     return f"/briefing/{date}/"
 
 
-def _esc(s: str) -> str:
-    return s.replace('"', '\\"')
+def normalize(entry: dict) -> dict:
+    """AI 출력의 값을 허용된 범위로 강제한다."""
+    return {
+        **entry,
+        "category": entry.get("category") if entry.get("category") in CATEGORIES else "위협동향",
+        "region": entry.get("region") if entry.get("region") in REGIONS else "해외",
+    }
 
 
 def write_post(date: str, entries: list[dict], terms: list[dict]) -> Path:
+    if not DATE_RE.match(date):
+        raise ValueError(f"잘못된 날짜: {date}")
+    entries = [normalize(e) for e in entries]
     regions = [e["region"] for e in entries]
+    plain_titles = " / ".join(re.sub(r"[\s{}]+", " ", str(e["title"]))[:80] for e in entries)[:300]
     lines = [
         "---",
         "layout: post",
-        f'title: "🔐 {date} 보안 이슈 브리핑"',
+        f"title: {json.dumps(f'🔐 {date} 보안 이슈 브리핑', ensure_ascii=False)}",
         f"date: {date} 09:00:00 +0900",
-        f'tags: [{", ".join(sorted({e["category"] for e in entries}))}]',
-        f'description: "{_esc(" / ".join(e["title"] for e in entries))[:300]}"',
+        f"tags: {json.dumps(sorted({e['category'] for e in entries}), ensure_ascii=False)}",
+        f"description: {json.dumps(html.escape(plain_titles), ensure_ascii=False)}",
         "---",
         "",
         f"> 오늘의 주요 보안 이슈 {len(entries)}건 "
@@ -50,33 +94,37 @@ def write_post(date: str, entries: list[dict], terms: list[dict]) -> Path:
         "",
     ]
     for i, e in enumerate(entries, 1):
-        lines.append(f"{i}. **[{e['region']}·{e['category']}]** {e['title']}")
+        lines.append(f"{i}. **[{e['region']}·{e['category']}]** {safe_text(e['title'], 200, True)}")
     lines.append("")
 
     for i, e in enumerate(entries, 1):
-        emoji = CATEGORY_EMOJI.get(e["category"], "🔎")
+        link = safe_url(e.get("link"))
+        source = safe_text(e.get("source"), 50, True)
         lines += [
             "---",
             "",
-            f"## {i}. {emoji} {e['title']}",
+            f"## {i}. {CATEGORIES[e['category']]} {safe_text(e['title'], 200, True)}",
             "",
-            f"`{e['region']}` `{e['category']}` · 출처: [{e['source']}]({e['link']})",
+            f"`{e['region']}` `{e['category']}` · 출처: " + (f"[{source}]({link})" if link else source),
             "",
-            f"**🎯 핵심**  ",
-            e["core"],
+            "**🎯 핵심**  ",
+            safe_text(e["core"]),
             "",
-            f"**📖 배경**  ",
-            e["background"],
+            "**📖 배경**  ",
+            safe_text(e["background"]),
             "",
-            f"**💥 영향**  ",
-            e["impact"],
+            "**💥 영향**  ",
+            safe_text(e["impact"]),
             "",
         ]
 
     if terms:
         lines += ["---", "", "## 📚 오늘의 보안 용어", ""]
         for t in terms:
-            lines.append(f"- **{t['term']}** ({t['english']}): {t['definition']}")
+            lines.append(
+                f"- **{safe_text(t['term'], 60, True)}** ({safe_text(t['english'], 80, True)}): "
+                f"{safe_text(t['definition'], 400, True)}"
+            )
         lines += ["", "👉 지금까지 나온 용어는 [보안 용어 사전](../../glossary/)에서 볼 수 있어요.", ""]
 
     lines += [
@@ -86,23 +134,28 @@ def write_post(date: str, entries: list[dict], terms: list[dict]) -> Path:
         "정확한 내용은 각 출처 원문을 확인하세요.</small>",
         "",
     ]
-    # AI가 쓴 글에 Liquid 문법({{ }}, {% %})이 섞이면 Jekyll 빌드가 깨지므로 무력화
-    text = "\n".join(lines).replace("{{", "{ {").replace("{%", "{ %")
     POSTS.mkdir(exist_ok=True)
     path = POSTS / f"{date}-security-briefing.md"
-    path.write_text(text, encoding="utf-8")
+    path.write_text("\n".join(lines), encoding="utf-8")
     return path
 
 
 def update_glossary(date: str, terms: list[dict]) -> int:
+    """용어 사전에 새 용어 추가. 값은 평문으로 저장하고, 페이지에서 escape 필터로 출력한다."""
     data = json.loads(GLOSSARY.read_text(encoding="utf-8")) if GLOSSARY.exists() else []
-    known = {d["term"].replace(" ", "").lower() for d in data} | {d["english"].replace(" ", "").lower() for d in data}
+    norm = lambda s: re.sub(r"\s+", "", str(s)).lower()
+    known = {norm(d["term"]) for d in data} | {norm(d["english"]) for d in data}
     added = 0
     for t in terms:
-        keys = {t["term"].replace(" ", "").lower(), t["english"].replace(" ", "").lower()}
-        if keys & known:
+        item = {
+            "term": re.sub(r"\s+", " ", str(t.get("term", ""))).strip()[:60],
+            "english": re.sub(r"\s+", " ", str(t.get("english", ""))).strip()[:80],
+            "definition": re.sub(r"\s+", " ", str(t.get("definition", ""))).strip()[:400],
+        }
+        keys = {norm(item["term"]), norm(item["english"])}
+        if not item["term"] or keys & known:
             continue
-        data.append({**t, "first_seen": date, "post": post_path(date)})
+        data.append({**item, "first_seen": date, "post": post_path(date)})
         known |= keys
         added += 1
     data.sort(key=lambda d: d["term"])
