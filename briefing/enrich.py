@@ -7,6 +7,7 @@
 보안 메모: 외부 API 응답도 '신뢰할 수 없는 입력'이다.
 형식·범위를 검사한 값만 통과시키고, 장애 시에는 해당 정보 없이 진행한다(게시를 막지 않음).
 """
+
 import json
 import os
 import re
@@ -25,7 +26,7 @@ EPSS_URL = "https://api.first.org/data/v1/epss"
 
 session = requests.Session()
 session.headers["User-Agent"] = config.USER_AGENT
-if os.getenv("NVD_API_KEY"):                       # 선택: 있으면 호출 한도가 늘어남
+if os.getenv("NVD_API_KEY"):  # 선택: 있으면 호출 한도가 늘어남
     session.headers["apiKey"] = os.environ["NVD_API_KEY"]
 
 
@@ -67,7 +68,12 @@ def parse_nvd(data: dict) -> dict | None:
     if cwes:
         result["cwe"] = cwes[:3]
     metrics = cve.get("metrics") or {}
-    for key, version in (("cvssMetricV31", "3.1"), ("cvssMetricV40", "4.0"), ("cvssMetricV30", "3.0"), ("cvssMetricV2", "2.0")):
+    for key, version in (
+        ("cvssMetricV31", "3.1"),
+        ("cvssMetricV40", "4.0"),
+        ("cvssMetricV30", "3.0"),
+        ("cvssMetricV2", "2.0"),
+    ):
         entries = [m for m in metrics.get(key) or [] if isinstance(m, dict) and isinstance(m.get("cvssData"), dict)]
         if not entries:
             continue
@@ -78,14 +84,16 @@ def parse_nvd(data: dict) -> dict | None:
             continue
         sev = str(m["cvssData"].get("baseSeverity") or m.get("baseSeverity") or "").upper()
         vector = str(m["cvssData"].get("vectorString", ""))
-        result.update({
-            "cvss": round(score, 1),
-            "cvss_version": version,
-            # v2 는 등급 체계가 달라서 v3 기준으로 다시 계산해 표시를 통일
-            "cvss_severity": sev if sev in SEVERITIES and version != "2.0" else cvss_band(score),
-            "cvss_vector": vector if VECTOR_RE.match(vector) else "",
-            "cvss_source": "NVD" if m.get("type") == "Primary" else "CNA",
-        })
+        result.update(
+            {
+                "cvss": round(score, 1),
+                "cvss_version": version,
+                # v2 는 등급 체계가 달라서 v3 기준으로 다시 계산해 표시를 통일
+                "cvss_severity": sev if sev in SEVERITIES and version != "2.0" else cvss_band(score),
+                "cvss_vector": vector if VECTOR_RE.match(vector) else "",
+                "cvss_source": "NVD" if m.get("type") == "Primary" else "CNA",
+            }
+        )
         break
     return result
 
@@ -100,8 +108,8 @@ def parse_epss(data: dict) -> dict | None:
         return None
     date = str(rows[0].get("date", ""))
     return {
-        "epss": round(epss * 100, 2),                       # %
-        "epss_percentile": round((pct or 0) * 100, 1),       # 상위 몇 % 인지 계산용
+        "epss": round(epss * 100, 2),  # %
+        "epss_percentile": round((pct or 0) * 100, 1),  # 상위 몇 % 인지 계산용
         "epss_date": date if re.match(r"^\d{4}-\d{2}-\d{2}$", date) else "",
     }
 
@@ -115,7 +123,7 @@ def _get_json(url: str, params: dict, max_bytes: int = 2_000_000) -> dict | None
             return data if isinstance(data, dict) else None
         except requests.HTTPError as e:
             code = e.response.status_code if e.response is not None else 0
-            if code in (403, 429, 503):                     # NVD 호출 한도
+            if code in (403, 429, 503):  # NVD 호출 한도
                 time.sleep(7 * (attempt + 1))
                 continue
             print(f"[warn] {url} 조회 실패: HTTP {code}")
@@ -158,14 +166,14 @@ def enrich(entries: list[dict], texts: list[str], refresh: bool = False) -> int:
     """
     kev = load_kev()
     first, changed = True, 0
-    for e, text in zip(entries, texts):
+    for e, text in zip(entries, texts, strict=True):
         cid = candidate_cve(e, text)
         if not cid:
             if not refresh:
                 e.update({"cve": "", "cve_status": "", "kev": False, "cvss": 0})
             continue
         if not first:
-            time.sleep(6)                                   # NVD 무키 한도: 30초에 5회
+            time.sleep(6)  # NVD 무키 한도: 30초에 5회
         first = False
         raw = _get_json(NVD_URL, {"cveId": cid})
         if raw is None and refresh:
@@ -191,7 +199,14 @@ def enrich(entries: list[dict], texts: list[str], refresh: bool = False) -> int:
             changed += before["cve"] != ""
             continue
         if not e.get("cvss") and ai_cvss and in_article:
-            e.update({"cvss": round(ai_cvss, 1), "cvss_severity": cvss_band(ai_cvss), "cvss_source": "기사", "cvss_version": ""})
+            e.update(
+                {
+                    "cvss": round(ai_cvss, 1),
+                    "cvss_severity": cvss_band(ai_cvss),
+                    "cvss_source": "기사",
+                    "cvss_version": "",
+                }
+            )
         epss = parse_epss(_get_json(EPSS_URL, {"cve": cid}) or {})
         if epss:
             e.update(epss)

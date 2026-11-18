@@ -2,13 +2,14 @@
 
 실행: python -m unittest discover tests
 """
+
 import sys
 import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-import feedback  # noqa: E402
+from briefing import feedback
 
 
 class FeedbackTest(unittest.TestCase):
@@ -38,7 +39,7 @@ class FeedbackTest(unittest.TestCase):
         self.assertNotIn("@here", e["description"])
         self.assertNotIn("](https", e["description"].replace("\\](", ""))
         self.assertIn("①자산✅", e["description"])
-        self.assertIn("②원인⬜", e["description"])        # "yes" 는 True 가 아님
+        self.assertIn("②원인⬜", e["description"])  # "yes" 는 True 가 아님
 
 
 if __name__ == "__main__":

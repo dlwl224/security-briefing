@@ -37,7 +37,7 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}   # 선택 사항: 비우면 자동 선택
           NVD_API_KEY: ${{ secrets.NVD_API_KEY }}  # 선택 사항: 없어도 동작 (있으면 NVD 호출 한도 증가)
-        run: python main.py
+        run: python -m briefing daily
 
       - name: Commit & push
         run: |
@@ -54,10 +54,10 @@ jobs:
       - name: Notify Discord
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-        run: python notify.py
+        run: python -m briefing notify
 
       - name: Notify failure
         if: failure()
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-        run: python notify.py --failed
+        run: python -m briefing notify --failed

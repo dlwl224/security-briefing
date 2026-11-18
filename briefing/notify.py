@@ -1,18 +1,19 @@
 """디스코드 웹훅으로 오늘 브리핑 알림을 보낸다.
 
-  python notify.py            # 오늘 브리핑 알림
-  python notify.py --failed   # 실행 실패 알림
+python -m briefing notify            # 오늘 브리핑 알림
+python -m briefing notify --failed   # 실행 실패 알림
 """
+
 import json
 import os
 import re
-import sys
 import time
-from pathlib import Path
 
 import requests
 
-OUT = Path(__file__).resolve().parent / ".briefing_out.json"
+from . import config
+
+OUT = config.OUT_FILE
 WEBHOOK = os.getenv("DISCORD_WEBHOOK_URL", "")
 EMOJI = {"취약점": "🛠️", "사고": "🚨", "정책": "📜", "위협동향": "📡"}
 
@@ -25,7 +26,7 @@ def discord_safe(s: str) -> str:
 
 
 def send(payload: dict) -> None:
-    payload["allowed_mentions"] = {"parse": []}   # 어떤 멘션(@everyone 등)도 알림으로 동작하지 않게
+    payload["allowed_mentions"] = {"parse": []}  # 어떤 멘션(@everyone 등)도 알림으로 동작하지 않게
     if not WEBHOOK:
         print("[warn] DISCORD_WEBHOOK_URL 없음 — 보낼 내용만 출력")
         print(json.dumps(payload, ensure_ascii=False, indent=2))
@@ -55,14 +56,21 @@ def wait_until_live(url: str, max_wait: int = 420) -> None:
     print("[warn] 페이지가 아직 안 열림 — 그래도 알림은 보냄")
 
 
-def main() -> int:
-    if "--failed" in sys.argv:
+def run(failed: bool = False) -> int:
+    """오늘 브리핑 알림 (failed=True 면 실행 실패 알림)."""
+    if failed:
         run = f"{os.getenv('GITHUB_SERVER_URL')}/{os.getenv('GITHUB_REPOSITORY')}/actions/runs/{os.getenv('GITHUB_RUN_ID')}"
-        send({"embeds": [{
-            "title": "⚠️ 오늘 보안 브리핑 생성 실패",
-            "description": f"Actions 로그를 확인하세요.\n{run}",
-            "color": 0x9E9E9E,
-        }]})
+        send(
+            {
+                "embeds": [
+                    {
+                        "title": "⚠️ 오늘 보안 브리핑 생성 실패",
+                        "description": f"Actions 로그를 확인하세요.\n{run}",
+                        "color": 0x9E9E9E,
+                    }
+                ]
+            }
+        )
         return 0
 
     if not OUT.exists():
@@ -105,7 +113,3 @@ def main() -> int:
         embed["footer"] = {"text": "📚 오늘의 용어: " + ", ".join(data["terms"])}
     send({"username": "보안 브리핑", "embeds": [embed]})
     return 0
-
-
-if __name__ == "__main__":
-    sys.exit(main())

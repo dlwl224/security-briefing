@@ -119,9 +119,11 @@
         const p = byDay.get(t);
         const label = new Date(t).toISOString().slice(0, 10);
         let cell;
-        if (p && typeof p.u === "string" && p.u.startsWith("/") && !p.u.startsWith("//")) {
+        if (p) {
           cell = document.createElement("a");
-          cell.href = p.u;
+          // 링크 주소는 데이터(DOM 텍스트)에서 읽지 않고, 숫자 계산으로 만든 날짜(label)로 직접 조립한다.
+          // → 데이터가 변조돼도 javascript: 등 다른 주소가 들어갈 수 없음 (CodeQL js/xss-through-dom)
+          cell.href = `briefing/${label}/`;
           const s = Math.min(5, Math.max(1, parseInt(p.s, 10) || 1));
           cell.dataset.sev = String(s);
           cell.setAttribute("aria-label", `${label} 브리핑, 위협 수준 ${s}`);
