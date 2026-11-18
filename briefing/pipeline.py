@@ -4,6 +4,7 @@
   python -m briefing daily            # 실제 실행 (GEMINI_API_KEY 필요)
   python -m briefing daily --dry-run  # AI 없이 수집만 테스트하고 RSS 요약으로 임시 포스트 생성
 """
+
 import json
 from datetime import datetime
 
@@ -37,6 +38,7 @@ def run(dry: bool = False) -> int:
         picked = (kr[:2] + gl[:3] + kr[2:] + gl[3:])[: config.TOP_N]
     else:
         from briefing import llm
+
         ids = llm.select_top(candidates, config.TOP_N)
         by_id = {c["id"]: c for c in candidates}
         picked = [by_id[i] for i in ids] or candidates[: config.TOP_N]
@@ -47,11 +49,18 @@ def run(dry: bool = False) -> int:
 
     if dry:
         entries = [
-            {**c, "category": "위협동향", "core": c["snippet"] or "(요약 없음)",
-             "background": f"[dry-run] 본문 앞부분: {c['text'][:200]}", "impact": "[dry-run] AI 요약 자리"}
+            {
+                **c,
+                "category": "위협동향",
+                "core": c["snippet"] or "(요약 없음)",
+                "background": f"[dry-run] 본문 앞부분: {c['text'][:200]}",
+                "impact": "[dry-run] AI 요약 자리",
+            }
             for c in picked
         ]
-        terms = [{"term": "드라이런", "english": "Dry run", "definition": "실제로 실행하기 전에 동작만 시험해 보는 것."}]
+        terms = [
+            {"term": "드라이런", "english": "Dry run", "definition": "실제로 실행하기 전에 동작만 시험해 보는 것."}
+        ]
         summary = "[dry-run] AI 요약 없이 만든 시험용 브리핑"
     else:
         result = llm.summarize(picked)
@@ -59,8 +68,9 @@ def run(dry: bool = False) -> int:
         for s in result.get("items", []):
             if 0 <= s["index"] < len(picked):
                 src = picked[s["index"]]
-                entries.append({**s, "region": src["region"], "source": src["source"], "link": src["link"],
-                                "_text": src["text"]})
+                entries.append(
+                    {**s, "region": src["region"], "source": src["source"], "link": src["link"], "_text": src["text"]}
+                )
         terms = result.get("terms", [])
         summary = result.get("daily_summary", "")
         if not entries:
@@ -75,18 +85,27 @@ def run(dry: bool = False) -> int:
     render.write_comment_template(date, entries)
     print(f"[info] 포스트 작성: {path.relative_to(ROOT)} / 새 용어 {added}개")
 
-    seen = (seen + [e["link"] for e in entries])[-config.SEEN_KEEP:]
+    seen = (seen + [e["link"] for e in entries])[-config.SEEN_KEEP :]
     SEEN.parent.mkdir(exist_ok=True)
     fileio.write_json(SEEN, seen, indent=0)
 
-    fileio.write_json(OUT, {
-        "date": date,
-        "url": render.site_url() + render.post_path(date),
-        "items": [{**{k: e[k] for k in ("title", "region", "category", "core", "link")},
-                   "cve": e.get("cve", ""), "cvss": e.get("cvss", 0), "kev": bool(e.get("kev"))} for e in entries],
-        "terms": [t["term"] for t in terms],
-        "summary": summary,
-        "comment_url": render.comment_edit_url(date),
-    })
+    fileio.write_json(
+        OUT,
+        {
+            "date": date,
+            "url": render.site_url() + render.post_path(date),
+            "items": [
+                {
+                    **{k: e[k] for k in ("title", "region", "category", "core", "link")},
+                    "cve": e.get("cve", ""),
+                    "cvss": e.get("cvss", 0),
+                    "kev": bool(e.get("kev")),
+                }
+                for e in entries
+            ],
+            "terms": [t["term"] for t in terms],
+            "summary": summary,
+            "comment_url": render.comment_edit_url(date),
+        },
+    )
     return 0
-

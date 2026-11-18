@@ -7,6 +7,7 @@
 - 링크는 http(s)만 허용 → javascript: 링크 차단
 - front matter 값은 JSON 문자열로 써서 YAML 인젝션 차단
 """
+
 import html
 import json
 import os
@@ -15,6 +16,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 from . import config, consulting, fileio
+from .models import Item
 
 ROOT = config.ROOT
 POSTS = config.POSTS_DIR
@@ -29,12 +31,12 @@ MD_SPECIAL = re.compile(r"([\\`*_\[\]|!#~])")
 def safe_text(s: object, max_len: int = 2000, single_line: bool = False) -> str:
     """신뢰할 수 없는 문자열을 마크다운 본문에 안전하게 넣을 수 있게 만든다."""
     s = str(s or "")
-    s = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]", "", s)        # 제어문자 제거
+    s = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]", "", s)  # 제어문자 제거
     s = re.sub(r"\s+", " ", s) if single_line else re.sub(r"\n{2,}", "\n", s)
     s = s.strip()[:max_len]
-    s = MD_SPECIAL.sub(r"\\\1", s)                                # 마크다운 문법 무력화 (링크·이미지·강조 등)
-    s = html.escape(s, quote=False)                               # < > & → HTML 태그 삽입 차단
-    s = s.replace("{", "&#123;").replace("}", "&#125;")           # Liquid 무력화
+    s = MD_SPECIAL.sub(r"\\\1", s)  # 마크다운 문법 무력화 (링크·이미지·강조 등)
+    s = html.escape(s, quote=False)  # < > & → HTML 태그 삽입 차단
+    s = s.replace("{", "&#123;").replace("}", "&#125;")  # Liquid 무력화
     return s.replace("\n", "  \n")
 
 
@@ -101,7 +103,7 @@ def normalize(entry: dict) -> dict:
         "factor_note": plain(entry.get("factor_note"), 80),
     }
     base["kev"] = bool(entry.get("kev")) and bool(base["cve"])
-    return {**base, **consulting.severity(base)}           # 위험도는 규칙으로 계산
+    return {**base, **consulting.severity(base)}  # 위험도는 규칙으로 계산
 
 
 def _pick(v, allowed: set, default: str = "") -> str:
@@ -116,11 +118,18 @@ def _bounded(v, lo: float, hi: float) -> float:
     return round(f, 2) if lo <= f <= hi else 0.0
 
 
+def _dump(value: object) -> str:
+    return json.dumps(value, ensure_ascii=False)
+
+
+def _date_or_empty(value: object) -> str:
+    return str(value) if DATE_RE.match(str(value or "")) else ""
+
+
 def metrics(e: dict) -> dict:
     """공식 지표(NVD/EPSS/KEV) — enrich 단계에서 검증됐지만 여기서 한 번 더 형식을 강제한다."""
     has_cve = bool(e["cve"])
     vector = plain(e.get("cvss_vector"), 300)
-    date_ok = lambda s: s if DATE_RE.match(str(s or "")) else ""
     return {
         "cve_status": _pick(e.get("cve_status"), {"nvd", "pending"}) if has_cve else "",
         "cvss_severity": _pick(str(e.get("cvss_severity", "")).upper(), {"LOW", "MEDIUM", "HIGH", "CRITICAL", "NONE"}),
@@ -129,14 +138,14 @@ def metrics(e: dict) -> dict:
         "cvss_vector": vector if re.match(r"^[A-Za-z0-9:./()]{1,300}$", vector) else "",
         "epss": _bounded(e.get("epss"), 0, 100) if has_cve else 0.0,
         "epss_percentile": _bounded(e.get("epss_percentile"), 0, 100) if has_cve else 0.0,
-        "epss_date": date_ok(e.get("epss_date")) if has_cve else "",
+        "epss_date": _date_or_empty(e.get("epss_date")) if has_cve else "",
         "kev": bool(e.get("kev")) and has_cve,
-        "kev_date": date_ok(e.get("kev_date")) if has_cve else "",
+        "kev_date": _date_or_empty(e.get("kev_date")) if has_cve else "",
         "kev_ransomware": bool(e.get("kev_ransomware")) and has_cve,
     }
 
 
-def structured_item(e: dict) -> dict:
+def structured_item(e: dict) -> Item:
     """레이아웃이 그릴 구조화 데이터 (모두 평문, 출력 시 escape)."""
     return {
         "title": plain(e["title"], 200),
@@ -193,29 +202,30 @@ def write_post(date: str, entries: list[dict], terms: list[dict], summary: str =
     plain_titles = " / ".join(re.sub(r"[\s{}]+", " ", str(e["title"]))[:80] for e in entries)[:300]
     items = [structured_item(e) for e in entries]
     term_items = [
-        {"term": plain(t.get("term"), 60), "english": plain(t.get("english"), 80),
-         "definition": plain(t.get("definition"), 400)}
+        {
+            "term": plain(t.get("term"), 60),
+            "english": plain(t.get("english"), 80),
+            "definition": plain(t.get("definition"), 400),
+        }
         for t in terms
     ]
-    scored = [e["severity"] for e in entries if isinstance(e["severity"], int)]   # '참고' 기사는 평균에서 제외
+    scored = [e["severity"] for e in entries if isinstance(e["severity"], int)]  # '참고' 기사는 평균에서 제외
     threat = max(1, round(sum(scored) / len(scored))) if scored else 1
-    dump = lambda v: json.dumps(v, ensure_ascii=False)
     lines = [
         "---",
         "layout: briefing",
-        f"title: {dump(f'{date} 보안 이슈 브리핑')}",
+        f"title: {_dump(f'{date} 보안 이슈 브리핑')}",
         f"date: {date} 09:00:00 +0900",
         f"issue_no: {issue_number(date)}",
         f"threat_level: {threat}",
-        f"summary: {dump(plain(summary, 120))}",
-        f"tags: {dump(sorted({e['category'] for e in entries}))}",
-        f"description: {dump(html.escape(plain_titles))}",
-        f"items: {dump(items)}",
-        f"terms: {dump(term_items)}",
+        f"summary: {_dump(plain(summary, 120))}",
+        f"tags: {_dump(sorted({e['category'] for e in entries}))}",
+        f"description: {_dump(html.escape(plain_titles))}",
+        f"items: {_dump(items)}",
+        f"terms: {_dump(term_items)}",
         "---",
         "",
-        f"> 오늘의 주요 보안 이슈 {len(entries)}건 "
-        f"(국내 {regions.count('국내')} · 해외 {regions.count('해외')})",
+        f"> 오늘의 주요 보안 이슈 {len(entries)}건 (국내 {regions.count('국내')} · 해외 {regions.count('해외')})",
         "",
         "## 📌 한눈에 보기",
         "",
@@ -279,14 +289,14 @@ def write_comment_template(date: str, entries: list[dict]) -> Path:
     if path.exists():
         return path
     lines = [
-        f"# ============================================================",
+        "# ============================================================",
         f"#  {date} 브리핑 — 📝 분석 노트",
-        f"# ============================================================",
+        "# ============================================================",
         "#",
         "# ▶ 쓰는 법",
-        "#   따옴표 \"\" 안에 적고 아래 [Commit changes] 를 누르면 1~2분 뒤 사이트에 표시됩니다.",
+        '#   따옴표 "" 안에 적고 아래 [Commit changes] 를 누르면 1~2분 뒤 사이트에 표시됩니다.',
         "#   비워 둔 칸은 표시되지 않아요. 하루 1건, 2~3문장이면 충분합니다.",
-        "#   (문장 안에 큰따옴표를 쓰려면 \\\" 로 적기)",
+        '#   (문장 안에 큰따옴표를 쓰려면 \\" 로 적기)',
         "#",
         "# ▶ 위험분석 4단계 (자산 → 위협·취약점 → 위험 → 대응, NIST SP 800-30 / 국내 위험분석 절차)",
         "#   ① 누구에게 해당되나? (자산·노출)    국내 어떤 기업·기관·시스템이 영향을 받나",
@@ -294,15 +304,15 @@ def write_comment_template(date: str, entries: list[dict]) -> Path:
         "#   ③ 얼마나 급한가? (가능성·영향)       KEV·EPSS·CVSS + 업무가 멈추나/정보가 새나",
         "#   ④ 그래서 무엇을 하나? (대응 권고)     감소·회피·전가·수용 중 무엇을, 언제까지",
         "#   처음엔 하루 1건, 한 단계만 써도 충분해요. 익숙해지면 ①~④를 한 문장씩.",
-        "#   모르면 질문으로 남겨도 좋아요 → 예) \"~가 왜 ~인지 아직 모르겠다. 이번 주 공부 주제.\"",
+        '#   모르면 질문으로 남겨도 좋아요 → 예) "~가 왜 ~인지 아직 모르겠다. 이번 주 공부 주제."',
         "#",
         "# ▶ 이렇게 쓰면 좋아요",
-        "#   ✅ \"~일 것 같다. 왜냐하면 ~\"  (추측과 근거를 나눠서)",
-        "#   ❌ AI 요약 다시 쓰기 / \"매우 위험하다\" 같은 일반론 / 확인 안 된 단정",
+        '#   ✅ "~일 것 같다. 왜냐하면 ~"  (추측과 근거를 나눠서)',
+        '#   ❌ AI 요약 다시 쓰기 / "매우 위험하다" 같은 일반론 / 확인 안 된 단정',
         "#",
         "# ▶ 예시 (①~④를 한 문장씩)",
-        "#   issue2: \"① 자바로 대외 서비스를 운영하는 국내 금융·공공이 대상. ② 인증 없는 원격 실행이라 외부 노출 서버가 위험.",
-        "#            ③ CVSS 8.1·KEV 미등재라 P2지만 노출 서버는 더 급함. ④ 외부 노출 Jenkins·Jira부터 2주 내 패치(위험 감소).\"",
+        '#   issue2: "① 자바로 대외 서비스를 운영하는 국내 금융·공공이 대상. ② 인증 없는 원격 실행이라 외부 노출 서버가 위험.',
+        '#            ③ CVSS 8.1·KEV 미등재라 P2지만 노출 서버는 더 급함. ④ 외부 노출 Jenkins·Jira부터 2주 내 패치(위험 감소)."',
         "#",
         "# ▶ 커밋하면 AI 피드백이 디스코드로 옵니다 (사이트에는 내가 쓴 글만 그대로 게시)",
         "# ============================================================",
@@ -321,8 +331,8 @@ def write_comment_template(date: str, entries: list[dict]) -> Path:
             if it["cvss"]:
                 hint.append(f"CVSS {it['cvss']:g}")
             hint.append(f"{it['region']}·{it['category']}")
-        except Exception:
-            pass
+        except (KeyError, TypeError, ValueError):
+            hint = []  # 힌트는 부가 정보: 실패해도 양식은 만든다
         tag = f"  [{' · '.join(hint)}]" if hint else ""
         lines.append(f"# {i:02d}. {plain(e.get('title'), 60)}{tag}")
         lines.append(f'issue{i}: ""')
@@ -340,11 +350,14 @@ def comment_edit_url(date: str) -> str:
     return f"{server}/{repo}/edit/main/_data/comments/{date}.yml"
 
 
+def _norm_term(s: object) -> str:
+    return re.sub(r"\s+", "", str(s)).lower()
+
+
 def update_glossary(date: str, terms: list[dict]) -> int:
     """용어 사전에 새 용어 추가. 값은 평문으로 저장하고, 페이지에서 escape 필터로 출력한다."""
     data = json.loads(GLOSSARY.read_text(encoding="utf-8")) if GLOSSARY.exists() else []
-    norm = lambda s: re.sub(r"\s+", "", str(s)).lower()
-    known = {norm(d["term"]) for d in data} | {norm(d["english"]) for d in data}
+    known = {_norm_term(d["term"]) for d in data} | {_norm_term(d["english"]) for d in data}
     added = 0
     for t in terms:
         item = {
@@ -352,7 +365,7 @@ def update_glossary(date: str, terms: list[dict]) -> int:
             "english": re.sub(r"\s+", " ", str(t.get("english", ""))).strip()[:80],
             "definition": re.sub(r"\s+", " ", str(t.get("definition", ""))).strip()[:400],
         }
-        keys = {norm(item["term"]), norm(item["english"])}
+        keys = {_norm_term(item["term"]), _norm_term(item["english"])}
         if not item["term"] or keys & known:
             continue
         data.append({**item, "first_seen": date, "post": post_path(date)})

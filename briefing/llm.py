@@ -1,4 +1,5 @@
 """Google Gemini API(무료 티어)로 이슈 선정 + 요약."""
+
 import json
 import os
 import time
@@ -9,7 +10,9 @@ from . import consulting
 
 API = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 # 앞의 모델이 없거나 한도 초과면 다음 모델로 시도
-MODELS = [m for m in [os.getenv("GEMINI_MODEL"), "gemini-flash-latest", "gemini-2.5-flash", "gemini-flash-lite-latest"] if m]
+MODELS = [
+    m for m in [os.getenv("GEMINI_MODEL"), "gemini-flash-latest", "gemini-2.5-flash", "gemini-flash-lite-latest"] if m
+]
 
 
 def _call(prompt: str, schema: dict) -> dict:
@@ -48,10 +51,7 @@ SELECT_SCHEMA = {
 
 
 def select_top(candidates: list[dict], n: int) -> list[int]:
-    lines = [
-        f"[{c['id']}] ({c['region']}/{c['source']}) {c['title']} :: {c['snippet'][:150]}"
-        for c in candidates
-    ]
+    lines = [f"[{c['id']}] ({c['region']}/{c['source']}) {c['title']} :: {c['snippet'][:150]}" for c in candidates]
     prompt = f"""너는 보안 뉴스 에디터다. 아래 후보 중 오늘 독자에게 가장 중요한 보안 이슈 {n}개를 골라 id 목록으로 답해라.
 
 선정 기준:
@@ -96,10 +96,26 @@ SUMMARY_SCHEMA = {
                     "attack": {"type": "ARRAY", "items": {"type": "STRING"}},
                     "actions": {"type": "ARRAY", "items": {"type": "STRING"}},
                 },
-                "required": ["index", "title", "category", "core", "background", "impact",
-                             "exploitation", "scale", "critical_sector", "domestic", "factor_note",
-                             "key_figure", "key_figure_label", "cve", "cvss",
-                             "isms", "attack", "actions"],
+                "required": [
+                    "index",
+                    "title",
+                    "category",
+                    "core",
+                    "background",
+                    "impact",
+                    "exploitation",
+                    "scale",
+                    "critical_sector",
+                    "domestic",
+                    "factor_note",
+                    "key_figure",
+                    "key_figure_label",
+                    "cve",
+                    "cvss",
+                    "isms",
+                    "attack",
+                    "actions",
+                ],
             },
         },
         "daily_summary": {"type": "STRING"},
@@ -124,7 +140,8 @@ def summarize(articles: list[dict]) -> dict:
     blocks = []
     for i, a in enumerate(articles):
         blocks.append(f"### 기사 {i} ({a['region']} / {a['source']})\n제목: {a['title']}\n본문:\n{a['text']}")
-    prompt = """너는 보안을 처음 접하는 사람도 이해할 수 있게 설명하는 보안 뉴스 해설가다.
+    prompt = (
+        """너는 보안을 처음 접하는 사람도 이해할 수 있게 설명하는 보안 뉴스 해설가다.
 아래 기사 각각을 한국어로 정리해라. 영어 기사도 한국어로 쓴다.
 
 각 기사(items, index는 기사 번호):
@@ -160,5 +177,9 @@ terms (오늘의 보안 용어): 기사들에 나온 보안 용어 중 비전공
 - 문체는 '~했다', '~이다' 체로 통일한다.
 - 과장이나 공포 조장 표현은 쓰지 않는다.
 
-""" + consulting.prompt_catalog() + "\n\n" + "\n\n".join(blocks)
+"""
+        + consulting.prompt_catalog()
+        + "\n\n"
+        + "\n\n".join(blocks)
+    )
     return _call(prompt, SUMMARY_SCHEMA)

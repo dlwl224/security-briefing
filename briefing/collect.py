@@ -1,8 +1,9 @@
 """RSS/CISA KEV에서 후보 기사를 모으고, 선택된 기사의 본문을 가져온다."""
+
 import calendar
 import json
 import re
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import feedparser
 import requests
@@ -12,7 +13,7 @@ from . import config
 from .netsafe import safe_get
 
 MAX_PAGE_BYTES = 3_000_000
-MAX_FEED_BYTES = 5_000_000      # RSS 는 보통 수백 KB. 거대 XML(엔티티 폭탄 등) 방어용 상한
+MAX_FEED_BYTES = 5_000_000  # RSS 는 보통 수백 KB. 거대 XML(엔티티 폭탄 등) 방어용 상한
 MAX_KEV_BYTES = 15_000_000
 
 session = requests.Session()
@@ -29,7 +30,7 @@ def _published(entry) -> datetime | None:
     for key in ("published_parsed", "updated_parsed"):
         t = entry.get(key)
         if t:
-            return datetime.fromtimestamp(calendar.timegm(t), tz=timezone.utc)
+            return datetime.fromtimestamp(calendar.timegm(t), tz=UTC)
     return None
 
 
@@ -50,14 +51,16 @@ def collect_rss(since: datetime, seen: set[str]) -> list[dict]:
                 continue
             if pub and pub < since:
                 continue
-            items.append({
-                "source": feed["name"],
-                "region": feed["region"],
-                "title": _clean(entry.get("title", ""), 200),
-                "link": link,
-                "snippet": _clean(entry.get("summary", "")),
-                "published": pub.isoformat() if pub else "",
-            })
+            items.append(
+                {
+                    "source": feed["name"],
+                    "region": feed["region"],
+                    "title": _clean(entry.get("title", ""), 200),
+                    "link": link,
+                    "snippet": _clean(entry.get("summary", "")),
+                    "published": pub.isoformat() if pub else "",
+                }
+            )
             count += 1
             if count >= config.MAX_PER_SOURCE:
                 break
@@ -85,21 +88,23 @@ def collect_kev(since: datetime, seen: set[str]) -> list[dict]:
         link = f"https://nvd.nist.gov/vuln/detail/{cve}"
         if link in seen:
             continue
-        items.append({
-            "source": "CISA KEV",
-            "region": "해외",
-            "title": f"[KEV 등재] {cve} {v.get('vendorProject', '')} {v.get('product', '')} - {v.get('vulnerabilityName', '')}",
-            "link": link,
-            "snippet": v.get("shortDescription", "")[:300],
-            "published": v.get("dateAdded", ""),
-            "kev": v,
-        })
+        items.append(
+            {
+                "source": "CISA KEV",
+                "region": "해외",
+                "title": f"[KEV 등재] {cve} {v.get('vendorProject', '')} {v.get('product', '')} - {v.get('vulnerabilityName', '')}",
+                "link": link,
+                "snippet": v.get("shortDescription", "")[:300],
+                "published": v.get("dateAdded", ""),
+                "kev": v,
+            }
+        )
     print(f"[info] CISA KEV: {len(items)}건")
     return items[: config.MAX_PER_SOURCE]
 
 
 def collect_candidates(seen: set[str]) -> list[dict]:
-    since = datetime.now(timezone.utc) - timedelta(hours=config.LOOKBACK_HOURS)
+    since = datetime.now(UTC) - timedelta(hours=config.LOOKBACK_HOURS)
     items = collect_rss(since, seen) + collect_kev(since, seen)
     # 제목이 같은 중복 제거
     uniq, titles = [], set()

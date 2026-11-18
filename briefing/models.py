@@ -4,6 +4,7 @@
 신뢰 경계: Candidate·Entry 의 문자열은 외부(RSS·AI·API)에서 왔으므로 '신뢰할 수 없음'.
           render.normalize / render.structured_item 을 통과한 Item 만 파일에 쓴다.
 """
+
 from typing import Literal, TypedDict
 
 Region = Literal["국내", "해외"]
@@ -24,15 +25,15 @@ class Candidate(TypedDict, total=False):
     link: str
     snippet: str
     published: str
-    text: str            # 선정 후 가져온 본문
-    kev: dict            # CISA KEV 원본 항목 (KEV 후보일 때만)
+    text: str  # 선정 후 가져온 본문
+    kev: dict  # CISA KEV 원본 항목 (KEV 후보일 때만)
 
 
 class Factor(TypedDict):
     """CVSS 벡터 해석 한 칸."""
 
-    k: str               # 항목명 (예: 공격 경로)
-    v: str               # 값 (예: 원격(인터넷) 공격 가능)
+    k: str  # 항목명 (예: 공격 경로)
+    v: str  # 값 (예: 원격(인터넷) 공격 가능)
     level: Literal["bad", "ok"]
 
 
@@ -49,9 +50,9 @@ class Item(TypedDict):
     key_figure: str
     key_figure_label: str
     source: str
-    link: str                       # http(s) 만
+    link: str  # http(s) 만
     # 위험도 (AI 는 요소만 판정, 점수는 consulting.severity 규칙)
-    severity: int | None            # 1~5, 정책·동향은 None('참고')
+    severity: int | None  # 1~5, 정책·동향은 None('참고')
     severity_method: Literal["rule", "ai"]
     severity_basis: list[str]
     exploitation: Exploitation | Literal[""]
@@ -60,14 +61,14 @@ class Item(TypedDict):
     critical_sector: bool
     factor_note: str
     # 공식 지표 (NVD · FIRST EPSS · CISA KEV)
-    cve: str                        # CVE-YYYY-NNNN 형식만
+    cve: str  # CVE-YYYY-NNNN 형식만
     cve_status: Literal["nvd", "pending", ""]
-    cvss: float                     # 0.0~10.0
+    cvss: float  # 0.0~10.0
     cvss_severity: CvssSeverity
     cvss_version: str
     cvss_source: Literal["NVD", "CNA", "기사", ""]
     cvss_vector: str
-    epss: float                     # % (0~100)
+    epss: float  # % (0~100)
     epss_percentile: float
     epss_date: str
     kev: bool
@@ -78,8 +79,8 @@ class Item(TypedDict):
     priority_reasons: list[str]
     cvss_factors: list[Factor]
     cwe: list[str]
-    isms: list[str]                 # _data/isms_p.json 허용 목록 안의 값만
-    attack: list[str]               # _data/attack.json 허용 목록 안의 값만
+    isms: list[str]  # _data/isms_p.json 허용 목록 안의 값만
+    attack: list[str]  # _data/attack.json 허용 목록 안의 값만
     actions: list[str]
 
 

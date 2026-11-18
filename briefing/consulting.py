@@ -3,6 +3,7 @@
 원칙: 공식 데이터로 계산할 수 있는 것은 규칙으로(재현 가능), AI 가 제안한 매핑은
 허용 목록(_data/*.json) 안에 있는 값만 통과시키고 화면에 'AI 제안'으로 표시한다.
 """
+
 import json
 import re
 
@@ -25,17 +26,40 @@ CWE_RE = re.compile(r"^CWE-\d{1,5}$")
 #    level: "bad" = 공격자에게 유리(위험), "ok" = 공격을 어렵게 하는 요인
 # ---------------------------------------------------------------------------
 FACTORS = {
-    "AV": ("공격 경로", {"N": ("원격(인터넷) 공격 가능", "bad"), "A": ("같은 네트워크에서만", "ok"),
-                     "L": ("로컬 접근 필요", "ok"), "P": ("물리적 접근 필요", "ok")}),
+    "AV": (
+        "공격 경로",
+        {
+            "N": ("원격(인터넷) 공격 가능", "bad"),
+            "A": ("같은 네트워크에서만", "ok"),
+            "L": ("로컬 접근 필요", "ok"),
+            "P": ("물리적 접근 필요", "ok"),
+        },
+    ),
     "AC": ("공격 난이도", {"L": ("공격 쉬움", "bad"), "H": ("공격 조건 까다로움", "ok")}),
     "AT": ("전제 조건", {"N": ("추가 조건 없음", "bad"), "P": ("특정 조건 필요", "ok")}),
-    "PR": ("필요 권한", {"N": ("로그인 불필요", "bad"), "L": ("일반 계정 필요", "ok"), "H": ("관리자 권한 필요", "ok")}),
-    "UI": ("사용자 행동", {"N": ("클릭 등 불필요", "bad"), "R": ("사용자 행동 필요", "ok"),
-                       "P": ("사용자 행동 필요", "ok"), "A": ("사용자 행동 필요", "ok")}),
+    "PR": (
+        "필요 권한",
+        {"N": ("로그인 불필요", "bad"), "L": ("일반 계정 필요", "ok"), "H": ("관리자 권한 필요", "ok")},
+    ),
+    "UI": (
+        "사용자 행동",
+        {
+            "N": ("클릭 등 불필요", "bad"),
+            "R": ("사용자 행동 필요", "ok"),
+            "P": ("사용자 행동 필요", "ok"),
+            "A": ("사용자 행동 필요", "ok"),
+        },
+    ),
     "S": ("영향 범위", {"C": ("다른 시스템까지 영향", "bad"), "U": ("해당 시스템에 한정", "ok")}),
 }
-IMPACT = {"C": "정보 유출", "I": "데이터 변조", "A": "서비스 마비",
-          "VC": "정보 유출", "VI": "데이터 변조", "VA": "서비스 마비"}
+IMPACT = {
+    "C": "정보 유출",
+    "I": "데이터 변조",
+    "A": "서비스 마비",
+    "VC": "정보 유출",
+    "VI": "데이터 변조",
+    "VA": "서비스 마비",
+}
 IMPACT_LEVEL = {"H": ("높음", "bad"), "L": ("낮음", "ok")}
 
 
@@ -71,7 +95,7 @@ def priority(e: dict) -> dict:
     if not e.get("cve"):
         return {"priority": "", "priority_reasons": []}
     cvss = float(e.get("cvss") or 0)
-    epss = float(e.get("epss") or 0)          # % 단위
+    epss = float(e.get("epss") or 0)  # % 단위
     reasons = []
     if e.get("kev"):
         reasons.append("CISA KEV 등재(실제 악용 확인)")
@@ -111,7 +135,7 @@ def severity(e: dict) -> dict:
         # 요소 판정이 없는 예전 글: 기존 AI 종합 판단 값을 그대로 쓰되 방식 표시
         return {"severity": e.get("severity"), "severity_basis": [], "severity_method": "ai"}
     if e.get("kev"):
-        exploit = "active"                                  # 공식 데이터가 AI 판정보다 우선
+        exploit = "active"  # 공식 데이터가 AI 판정보다 우선
     basis, total = [], 0
     for table, key in ((EXPLOIT, exploit), (SCALE, scale)):
         pts, label = table[key]
@@ -134,7 +158,7 @@ def severity(e: dict) -> dict:
 def clean_codes(values, allowed: dict, limit: int = 4) -> list[str]:
     out = []
     for v in values if isinstance(values, list) else []:
-        v = str(v).strip().upper()          # 't1190' → 'T1190', '2.10.8' 은 그대로
+        v = str(v).strip().upper()  # 't1190' → 'T1190', '2.10.8' 은 그대로
         if v in allowed and v not in out:
             out.append(v)
     return out[:limit]

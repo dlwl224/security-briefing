@@ -1,12 +1,12 @@
 """디스코드 웹훅으로 오늘 브리핑 알림을 보낸다.
 
-  python -m briefing notify            # 오늘 브리핑 알림
-  python -m briefing notify --failed   # 실행 실패 알림
+python -m briefing notify            # 오늘 브리핑 알림
+python -m briefing notify --failed   # 실행 실패 알림
 """
+
 import json
 import os
 import re
-import sys
 import time
 
 import requests
@@ -26,7 +26,7 @@ def discord_safe(s: str) -> str:
 
 
 def send(payload: dict) -> None:
-    payload["allowed_mentions"] = {"parse": []}   # 어떤 멘션(@everyone 등)도 알림으로 동작하지 않게
+    payload["allowed_mentions"] = {"parse": []}  # 어떤 멘션(@everyone 등)도 알림으로 동작하지 않게
     if not WEBHOOK:
         print("[warn] DISCORD_WEBHOOK_URL 없음 — 보낼 내용만 출력")
         print(json.dumps(payload, ensure_ascii=False, indent=2))
@@ -60,11 +60,17 @@ def run(failed: bool = False) -> int:
     """오늘 브리핑 알림 (failed=True 면 실행 실패 알림)."""
     if failed:
         run = f"{os.getenv('GITHUB_SERVER_URL')}/{os.getenv('GITHUB_REPOSITORY')}/actions/runs/{os.getenv('GITHUB_RUN_ID')}"
-        send({"embeds": [{
-            "title": "⚠️ 오늘 보안 브리핑 생성 실패",
-            "description": f"Actions 로그를 확인하세요.\n{run}",
-            "color": 0x9E9E9E,
-        }]})
+        send(
+            {
+                "embeds": [
+                    {
+                        "title": "⚠️ 오늘 보안 브리핑 생성 실패",
+                        "description": f"Actions 로그를 확인하세요.\n{run}",
+                        "color": 0x9E9E9E,
+                    }
+                ]
+            }
+        )
         return 0
 
     if not OUT.exists():
@@ -107,4 +113,3 @@ def run(failed: bool = False) -> int:
         embed["footer"] = {"text": "📚 오늘의 용어: " + ", ".join(data["terms"])}
     send({"username": "보안 브리핑", "embeds": [embed]})
     return 0
-

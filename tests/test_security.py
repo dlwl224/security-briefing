@@ -2,6 +2,7 @@
 
 실행: python -m unittest discover tests
 """
+
 import re
 import sys
 import unittest
@@ -9,16 +10,21 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from briefing import notify, render  # noqa: E402
+from briefing import notify, render
 
 EVIL = (
-    '<script>alert(1)</script> [클릭](javascript:alert(1)) ![x](https://evil/x.png) '
+    "<script>alert(1)</script> [클릭](javascript:alert(1)) ![x](https://evil/x.png) "
     '{{ site.github }} {% include x %} "\n---\nlayout: evil'
 )
 ENTRY = {
-    "title": EVIL, "category": "해킹<b>", "region": "국내", "core": EVIL,
-    "background": "정상 문장 & 3 < 5", "impact": "x",
-    "source": "src](javascript:alert(1))", "link": "javascript:alert(1)",
+    "title": EVIL,
+    "category": "해킹<b>",
+    "region": "국내",
+    "core": EVIL,
+    "background": "정상 문장 & 3 < 5",
+    "impact": "x",
+    "source": "src](javascript:alert(1))",
+    "link": "javascript:alert(1)",
 }
 TERMS = [{"term": "<img src=x onerror=alert(1)>", "english": "XSS", "definition": EVIL}]
 
@@ -38,10 +44,11 @@ class RenderSecurityTest(unittest.TestCase):
 
     def test_front_matter_items_are_valid_json_data(self):
         import json
+
         items_line = next(l for l in self.front.splitlines() if l.startswith("items: "))
-        items = json.loads(items_line[len("items: "):])
-        self.assertEqual(items[0]["link"], "")                 # javascript: 링크 제거
-        self.assertNotIn("\n", items[0]["title"])              # 한 줄 평문
+        items = json.loads(items_line[len("items: ") :])
+        self.assertEqual(items[0]["link"], "")  # javascript: 링크 제거
+        self.assertNotIn("\n", items[0]["title"])  # 한 줄 평문
 
     def test_no_injected_markdown_links(self):
         # 이스케이프되지 않은 '](' 는 우리가 넣은 용어 사전 링크 하나뿐이어야 함
@@ -54,9 +61,10 @@ class RenderSecurityTest(unittest.TestCase):
     def test_front_matter_not_injected(self):
         lines = self.front.strip().splitlines()
         self.assertFalse(any(l.startswith("layout: evil") for l in lines))
-        self.assertEqual([l.split(":")[0] for l in lines],
-                         ["layout", "title", "date", "issue_no", "threat_level", "summary",
-                          "tags", "description", "items", "terms"])
+        self.assertEqual(
+            [l.split(":")[0] for l in lines],
+            ["layout", "title", "date", "issue_no", "threat_level", "summary", "tags", "description", "items", "terms"],
+        )
 
     def test_category_forced_to_allowed_value(self):
         self.assertNotIn("해킹", self.text)
@@ -65,8 +73,8 @@ class RenderSecurityTest(unittest.TestCase):
         e = render.normalize({**ENTRY, "category": "사고", "severity": "99", "cvss": "abc", "cve": "<b>CVE"})
         self.assertEqual((e["severity"], e["cvss"], e["cve"]), (5, 0.0, ""))
         item = render.structured_item(e)
-        self.assertEqual(item["link"], "")          # javascript: 링크 제거
-        self.assertNotIn("\n", item["core"])       # 제어문자/개행 제거
+        self.assertEqual(item["link"], "")  # javascript: 링크 제거
+        self.assertNotIn("\n", item["core"])  # 제어문자/개행 제거
 
     def test_unsafe_url_rejected(self):
         self.assertEqual(render.safe_url("javascript:alert(1)"), "")
@@ -94,12 +102,31 @@ class TemplateEscapeTest(unittest.TestCase):
 
     ROOT = Path(__file__).resolve().parent.parent
     # 숫자·날짜·내부 URL 등 생성 단계에서 검증되는 필드는 예외
-    SAFE_FIELDS = {"severity", "cvss", "issue_no", "threat_level", "date", "url", "size", "previous", "next", "index",
-                   "epss", "epss_percentile", "kev", "kev_ransomware"}
+    SAFE_FIELDS = frozenset(
+        {
+            "severity",
+            "cvss",
+            "issue_no",
+            "threat_level",
+            "date",
+            "url",
+            "size",
+            "previous",
+            "next",
+            "index",
+            "epss",
+            "epss_percentile",
+            "kev",
+            "kev_ransomware",
+        }
+    )
 
     def test_untrusted_fields_are_escaped(self):
-        files = (list((self.ROOT / "_layouts").glob("*.html")) + list((self.ROOT / "_includes").glob("*.html"))
-                 + [self.ROOT / "glossary.md", self.ROOT / "about.md"])
+        files = (
+            list((self.ROOT / "_layouts").glob("*.html"))
+            + list((self.ROOT / "_includes").glob("*.html"))
+            + [self.ROOT / "glossary.md", self.ROOT / "about.md"]
+        )
         bad = []
         for f in files:
             text = f.read_text(encoding="utf-8")
