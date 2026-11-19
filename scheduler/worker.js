@@ -69,11 +69,15 @@ export async function run(cron, time, env) {
 
 export default {
   async scheduled(event, env, ctx) {
+    const date = kstDate(event.scheduledTime);
     ctx.waitUntil(
-      run(event.cron, event.scheduledTime, env).catch(async (err) => {
-        await alert(env, `❌ 브리핑 스케줄러 오류: ${String(err.message).slice(0, 120)}`);
-        throw err;
-      }),
+      run(event.cron, event.scheduledTime, env)
+        .then((result) => console.log(JSON.stringify({ date, cron: event.cron, result })))
+        .catch(async (err) => {
+          console.error(JSON.stringify({ date, cron: event.cron, error: String(err.message).slice(0, 120) }));
+          await alert(env, `❌ 브리핑 스케줄러 오류: ${String(err.message).slice(0, 120)}`);
+          throw err;
+        }),
     );
   },
   async fetch() {
