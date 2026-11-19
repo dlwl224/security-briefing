@@ -20,4 +20,5 @@ exclude:
   - README.md
   - SECURITY.md
   - tests/
+  - scheduler/
   - .github/
