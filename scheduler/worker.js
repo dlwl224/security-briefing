@@ -58,7 +58,8 @@ async function alert(env, text) {
 export async function run(cron, time, env) {
   const cfg = config(env);
   const date = kstDate(time);
-  if (await postExists(cfg, date)) return "exists";
+  const test = env.TEST_DISPATCH === "true";
+  if (!test && (await postExists(cfg, date))) return "exists";
   if (cron === env.WATCHDOG_CRON) {
     await alert(env, `⚠️ ${date} 보안 브리핑이 아직 없어 다시 실행합니다.`);
   }
