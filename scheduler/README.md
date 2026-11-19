@@ -59,6 +59,7 @@ Worker 화면 → **Settings**
 - Worker 화면 → **Settings → Trigger Events** 에서 cron 옆 **⋯ → Trigger** (또는 상단 **Schedule** 테스트)를 누르면 바로 실행된다
 - GitHub **Actions** 탭에 `workflow_dispatch` 로 `Daily Security Briefing` 이 생기면 성공 (오늘 글이 이미 있으면 Worker 가 아무것도 하지 않는 것이 정상)
 - Worker 화면 **Logs** 에서 오류 확인
+- 오늘 글이 이미 있어도 실행 신호까지 시험하려면: 변수 `TEST_DISPATCH` = `true` 를 잠시 넣고 임시 cron 실행 → Actions 에 새 실행이 생기면 성공 (워크플로는 오늘 글이 있어 바로 건너뜀) → **시험 후 변수 삭제**
 
 ### 토큰 교체·폐기
 - 만료 전: 1)을 다시 해서 새 토큰 → Worker Secret `GITHUB_TOKEN` 덮어쓰기 → 옛 토큰 **Delete**
