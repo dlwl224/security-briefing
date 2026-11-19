@@ -2,8 +2,15 @@ name: Daily Security Briefing
 
 on:
   schedule:
-    - cron: "0 0 * * *"
+    - cron: "47 23 * * *"
+    - cron: "17 0 * * *"
+    - cron: "47 0 * * *"
   workflow_dispatch:
+    inputs:
+      force:
+        description: "오늘 글이 있어도 다시 생성"
+        type: boolean
+        default: false
 
 permissions: {}
 
@@ -36,7 +43,13 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
           NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
-        run: python -m briefing daily
+          FORCE: ${{ inputs.force }}
+        run: |
+          if [ "$FORCE" = "true" ]; then
+            python -m briefing daily --force
+          else
+            python -m briefing daily
+          fi
 
       - name: Commit & push
         run: |

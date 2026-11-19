@@ -10,9 +10,13 @@ SEEN = config.SEEN_FILE
 OUT = config.OUT_FILE
 
 
-def run(dry: bool = False) -> int:
+def run(dry: bool = False, force: bool = False) -> int:
     """매일 브리핑 생성: (최근 글 지표 갱신) → 수집 → 선정 → 본문 수집 → 요약 → 공식 지표 보강 → 포스트 작성."""
     date = datetime.now(config.KST).strftime("%Y-%m-%d")
+    if not dry and not force and render.post_file(date).exists():
+        print(f"[info] {date} 브리핑이 이미 있어 건너뜀")
+        OUT.unlink(missing_ok=True)
+        return 0
     seen = json.loads(SEEN.read_text(encoding="utf-8")) if SEEN.exists() else []
 
     if not dry:
