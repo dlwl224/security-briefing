@@ -23,6 +23,7 @@ briefing/                 ← 파이썬 코드는 전부 이 패키지 안에 (�
   netsafe.py              외부 요청 안전 장치 (SSRF 방어)
   fileio.py               파일 쓰기 (UTF-8 · LF · 원자적 교체)
 tests/                    단위·보안 테스트 (네트워크 없이 실행)
+scheduler/                외부 스케줄러 (Cloudflare Worker) — 매일 실행 신호·감시
 _layouts/ _includes/ assets/   사이트(Jekyll) 화면
 _posts/ _data/            사이트 데이터 (봇이 쓰는 곳 + 사람이 쓰는 분석 노트)
 state/                    봇의 내부 상태 — 이미 다룬 기사 목록 등 (사이트에 나가지 않음)
