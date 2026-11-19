@@ -24,6 +24,7 @@ briefing/                 ← 파이썬 코드는 전부 이 패키지 안에 (�
   fileio.py               파일 쓰기 (UTF-8 · LF · 원자적 교체)
 tests/                    단위·보안 테스트 (네트워크 없이 실행)
 scheduler/                외부 스케줄러 (Cloudflare Worker) — 매일 실행 신호·감시
+infra/                    AWS 인프라 (Terraform) — bootstrap · stacks/<이름> · modules/<이름>
 _layouts/ _includes/ assets/   사이트(Jekyll) 화면
 _posts/ _data/            사이트 데이터 (봇이 쓰는 곳 + 사람이 쓰는 분석 노트)
 state/                    봇의 내부 상태 — 이미 다룬 기사 목록 등 (사이트에 나가지 않음)
@@ -111,6 +112,7 @@ docs/                     문서 (사이트에 나가지 않음)
 | 13 | 워크플로는 `permissions: {}` 로 시작해 필요한 job 에만 최소 권한. Action 은 **커밋 SHA 고정** | `.github/workflows/` |
 | 14 | 워크플로에서 `${{ github.event.* }}` 값은 `run:` 에 직접 넣지 않고 **환경변수로** 넘긴다 (스크립트 주입 방지) | `note-feedback.yml` |
 | 15 | 새 보안 규칙을 만들면 **악성 입력 테스트를 함께** 추가한다 | `tests/` |
+| 16 | AWS 자원은 **Terraform 코드로만** 만든다. 장기 액세스 키 금지(OIDC), 권한은 자원 이름 범위로 좁히고, checkov 예외는 `infra/README.md` 에 이유를 적는다 | `infra/`, `infra.yml` |
 
 ---
 

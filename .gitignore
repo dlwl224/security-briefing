@@ -5,3 +5,10 @@ _site/
 .jekyll-cache/
 .venv/
 .env
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+tfplan
+*_override.tf
+crash.log
