@@ -54,6 +54,12 @@ def site_url() -> str:
     return f"https://{owner.lower()}.github.io/{name}"
 
 
+def post_file(date: str) -> Path:
+    if not DATE_RE.match(date):
+        raise ValueError(f"잘못된 날짜: {date}")
+    return POSTS / f"{date}-security-briefing.md"
+
+
 def post_path(date: str) -> str:
     return f"/briefing/{date}/"
 
@@ -261,7 +267,7 @@ def write_post(date: str, entries: list[dict], terms: list[dict], summary: str =
         "",
     ]
     POSTS.mkdir(exist_ok=True)
-    path = POSTS / f"{date}-security-briefing.md"
+    path = post_file(date)
     fileio.write_text(path, "\n".join(lines))
     return path
 

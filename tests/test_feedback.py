@@ -41,3 +41,26 @@ class FeedbackTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class DailySkipTest(unittest.TestCase):
+    def test_skips_when_today_post_exists(self):
+        import tempfile
+        from unittest import mock
+
+        from briefing import pipeline, render
+
+        with tempfile.TemporaryDirectory() as d, mock.patch.object(render, "POSTS", Path(d)):
+            today = pipeline.datetime.now(pipeline.config.KST).strftime("%Y-%m-%d")
+            (Path(d) / f"{today}-security-briefing.md").write_text("x", encoding="utf-8")
+            with (
+                mock.patch.object(pipeline.collect, "collect_candidates", side_effect=AssertionError("수집하면 안 됨")),
+                mock.patch.object(pipeline.refresh, "refresh_recent", side_effect=AssertionError("갱신하면 안 됨")),
+            ):
+                self.assertEqual(pipeline.run(), 0)
+
+    def test_force_flag_is_parsed(self):
+        from briefing.__main__ import build_parser
+
+        self.assertTrue(build_parser().parse_args(["daily", "--force"]).force)
+        self.assertFalse(build_parser().parse_args(["daily"]).force)

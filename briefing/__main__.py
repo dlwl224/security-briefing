@@ -19,6 +19,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     daily = sub.add_parser("daily", help="브리핑 생성")
     daily.add_argument("--dry-run", action="store_true", help="AI 없이 수집·글 생성만")
+    daily.add_argument("--force", action="store_true", help="오늘 글이 이미 있어도 다시 생성")
 
     noti = sub.add_parser("notify", help="디스코드 알림")
     noti.add_argument("--failed", action="store_true", help="실행 실패 알림")
@@ -31,7 +32,7 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     if args.command == "daily":
-        return pipeline.run(dry=args.dry_run)
+        return pipeline.run(dry=args.dry_run, force=args.force)
     if args.command == "notify":
         return notify.run(failed=args.failed)
     return feedback.run(dry_date=args.dry_run)
