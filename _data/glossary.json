@@ -42,6 +42,20 @@
     "post": "/briefing/2026-11-18/"
   },
   {
+    "term": "인증 우회",
+    "english": "Authentication Bypass",
+    "definition": "로그인할 때 필요한 아이디나 비밀번호 검사 과정을 몰래 건너뛰어 신분 확인 없이 시스템에 들어가는 해킹 방식이다.",
+    "first_seen": "2026-11-20",
+    "post": "/briefing/2026-11-20/"
+  },
+  {
+    "term": "제로데이",
+    "english": "Zero-Day",
+    "definition": "보안 패치가 아직 나오지 않은 아주 새로운 취약점을 뜻하며, 집의 새로운 문틈을 발견했지만 아직 자물쇠가 만들어지지 않은 상태와 같다.",
+    "first_seen": "2026-11-20",
+    "post": "/briefing/2026-11-20/"
+  },
+  {
     "term": "파이파이",
     "english": "Python Package Index, PyPI",
     "definition": "파이썬 프로그래머들이 만든 다양한 프로그램과 도구를 모아두고 자유롭게 내려받을 수 있는 세상의 거대한 앱스토어 같은 저장소이다.",
