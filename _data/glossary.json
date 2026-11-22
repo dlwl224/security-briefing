@@ -1,10 +1,31 @@
 [
   {
+    "term": "AI 에이전트",
+    "english": "AI Agent",
+    "definition": "사람의 직접적인 조종 없이 스스로 판단하고 목표를 찾아 실행하는 인공지능 프로그램이다. 똑똑한 비서처럼 해커의 명령을 받아 자동 공격을 수행하기도 한다.",
+    "first_seen": "2026-11-23",
+    "post": "/briefing/2026-11-23/"
+  },
+  {
+    "term": "CVV 코드",
+    "english": "Card Verification Value",
+    "definition": "신용카드 뒷면에 적힌 3자리 숫자로, 온라인 결제할 때 본인 확인을 위해 쓰이는 비밀번호 같은 역할이다.",
+    "first_seen": "2026-11-23",
+    "post": "/briefing/2026-11-23/"
+  },
+  {
     "term": "HTTP 요청 밀수",
     "english": "HTTP Request Smuggling",
     "definition": "앞단 웹 서버와 뒷단 처리 서버가 데이터를 끊어 읽는 기준의 차이를 이용해 정상 요청 속에 악성 명령을 숨겨 몰래 통과시키는 공격 수법이다.",
     "first_seen": "2026-11-21",
     "post": "/briefing/2026-11-21/"
+  },
+  {
+    "term": "가상자산 채굴",
+    "english": "Cryptocurrency Mining",
+    "definition": "컴퓨터의 강력한 연산 능력을 동원해 가상화폐를 얻는 과정이다. 해커들은 남의 컴퓨터 몰래 이 기능을 심어서 공짜로 코인을 캐간다.",
+    "first_seen": "2026-11-23",
+    "post": "/briefing/2026-11-23/"
   },
   {
     "term": "개념증명",
