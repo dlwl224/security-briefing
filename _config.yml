@@ -3,6 +3,7 @@ description: "매일 오전 9시, 국내·해외 주요 보안 이슈 5건을 �
 lang: ko
 timezone: Asia/Seoul
 permalink: /briefing/:year-:month-:day/
+future: true
 
 plugins:
   - jekyll-feed
@@ -21,4 +22,5 @@ exclude:
   - SECURITY.md
   - tests/
   - scheduler/
+  - infra/
   - .github/

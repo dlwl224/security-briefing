@@ -10,8 +10,10 @@ from . import consulting
 
 API = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 MODELS = [
-    m for m in [os.getenv("GEMINI_MODEL"), "gemini-flash-latest", "gemini-2.5-flash", "gemini-flash-lite-latest"] if m
+    m for m in [os.getenv("GEMINI_MODEL"), "gemini-flash-latest", "gemini-3.8-flash", "gemini-flash-lite-latest"] if m
 ]
+TIMEOUT = 180
+RETRY_STATUS = (429, 500, 503)
 
 
 def _call(prompt: str, schema: dict) -> dict:
@@ -25,17 +27,34 @@ def _call(prompt: str, schema: dict) -> dict:
         },
     }
     last_err = None
-    for model in MODELS:
+    for model in dict.fromkeys(MODELS):
         for attempt in range(3):
-            r = requests.post(
-                API.format(model=model), headers={"x-goog-api-key": key}, json=body, timeout=120, allow_redirects=False
-            )
+            try:
+                r = requests.post(
+                    API.format(model=model),
+                    headers={"x-goog-api-key": key},
+                    json=body,
+                    timeout=TIMEOUT,
+                    allow_redirects=False,
+                )
+            except requests.Timeout:
+                last_err = f"{model} timeout"
+                break
+            except requests.ConnectionError:
+                last_err = f"{model} connection error"
+                time.sleep(20 * (attempt + 1))
+                continue
             if r.status_code == 200:
-                text = r.json()["candidates"][0]["content"]["parts"][0]["text"]
+                try:
+                    text = r.json()["candidates"][0]["content"]["parts"][0]["text"]
+                    result = json.loads(text)
+                except (ValueError, KeyError, IndexError, TypeError):
+                    last_err = f"{model} invalid response"
+                    break
                 print(f"[info] Gemini 모델 사용: {model}")
-                return json.loads(text)
+                return result
             last_err = f"{model} {r.status_code}: {r.text[:300]}"
-            if r.status_code in (429, 500, 503):
+            if r.status_code in RETRY_STATUS:
                 time.sleep(20 * (attempt + 1))
                 continue
             break
