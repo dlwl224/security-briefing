@@ -7,6 +7,13 @@
     "post": "/briefing/2026-11-23/"
   },
   {
+    "term": "API",
+    "english": "Application Programming Interface",
+    "definition": "서로 다른 소프트웨어가 대화를 나누고 데이터를 주고받을 수 있게 해주는 규칙이자 디지털 소통 창구다.",
+    "first_seen": "2026-11-24",
+    "post": "/briefing/2026-11-24/"
+  },
+  {
     "term": "CVV 코드",
     "english": "Card Verification Value",
     "definition": "신용카드 뒷면에 적힌 3자리 숫자로, 온라인 결제할 때 본인 확인을 위해 쓰이는 비밀번호 같은 역할이다.",
@@ -40,6 +47,20 @@
     "definition": "보안이 철저한 대기업을 직접 공격하는 대신 납품업체나 외부 소프트웨어 서비스를 먼저 해킹해 이를 이용하는 고객사들을 연쇄 감염시키는 수법이다. 건물 경비실을 뚫기 어려워 수돗물 정수장이나 배관에 독극물을 풀어 주민 전체를 노리는 것에 비유할 수 있다.",
     "first_seen": "2026-11-18",
     "post": "/briefing/2026-11-18/"
+  },
+  {
+    "term": "다크웹",
+    "english": "Dark Web",
+    "definition": "특수한 전용 브라우저를 사용해야만 들어갈 수 있는 숨겨진 인터넷 공간으로, 해커들이 훔친 정보를 사고파는 암시장 역할을 한다.",
+    "first_seen": "2026-11-24",
+    "post": "/briefing/2026-11-24/"
+  },
+  {
+    "term": "루트 권한",
+    "english": "Root Privilege",
+    "definition": "컴퓨터 시스템 내의 모든 파일과 설정을 마음대로 바꾸거나 삭제할 수 있는 절대적인 관리자 권한이다.",
+    "first_seen": "2026-11-24",
+    "post": "/briefing/2026-11-24/"
   },
   {
     "term": "버퍼 오버플로",
