@@ -14,6 +14,13 @@
     "post": "/briefing/2026-11-24/"
   },
   {
+    "term": "CVSS",
+    "english": "Common Vulnerability Scoring System",
+    "definition": "컴퓨터 보안 취약점의 심각성을 0부터 10까지의 점수로 매겨 얼마나 위험한지 알려주는 객관적인 지표이다.",
+    "first_seen": "2026-11-25",
+    "post": "/briefing/2026-11-25/"
+  },
+  {
     "term": "CVV 코드",
     "english": "Card Verification Value",
     "definition": "신용카드 뒷면에 적힌 3자리 숫자로, 온라인 결제할 때 본인 확인을 위해 쓰이는 비밀번호 같은 역할이다.",
