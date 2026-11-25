@@ -35,6 +35,13 @@
     "post": "/briefing/2026-11-21/"
   },
   {
+    "term": "가맹점 식별번호",
+    "english": "Merchant ID",
+    "definition": "결제 시스템에서 개별 상점을 정확하게 구별하고 거래를 정산하기 위해 부여하는 고유 번호이다.",
+    "first_seen": "2026-11-26",
+    "post": "/briefing/2026-11-26/"
+  },
+  {
     "term": "가상자산 채굴",
     "english": "Cryptocurrency Mining",
     "definition": "컴퓨터의 강력한 연산 능력을 동원해 가상화폐를 얻는 과정이다. 해커들은 남의 컴퓨터 몰래 이 기능을 심어서 공짜로 코인을 캐간다.",
@@ -91,6 +98,13 @@
     "post": "/briefing/2026-11-18/"
   },
   {
+    "term": "연계정보",
+    "english": "Connecting Information",
+    "definition": "인터넷 서비스에서 본인인증을 할 때 주민등록번호 대신 개인을 구별하기 위해 사용하는 고유한 식별 값이다.",
+    "first_seen": "2026-11-26",
+    "post": "/briefing/2026-11-26/"
+  },
+  {
     "term": "원격 코드 실행",
     "english": "Remote Code Execution (RCE)",
     "definition": "해커가 컴퓨터 앞에 직접 앉아 있지 않고 멀리 떨어진 인터넷망을 통해 상대방 컴퓨터에서 악성 프로그램을 강제로 실행하는 공격이다. 도둑이 집 밖에서 만능 리모컨을 눌러 집안의 금고를 열고 기계를 제어하는 것과 비슷하다.",
@@ -131,6 +145,13 @@
     "definition": "소프트웨어 개발사가 문제를 파악하고 해결 패치를 내놓기도 전에 해커가 먼저 찾아내 악용하는 보안 구멍을 말한다.",
     "first_seen": "2026-11-21",
     "post": "/briefing/2026-11-21/"
+  },
+  {
+    "term": "취약점 체이닝",
+    "english": "Vulnerability Chaining",
+    "definition": "여러 개의 보안 허점을 사방의 열쇠처럼 차례대로 엮어서 시스템 방어막을 뚫는 공격 방법이다.",
+    "first_seen": "2026-11-26",
+    "post": "/briefing/2026-11-26/"
   },
   {
     "term": "파이파이",
