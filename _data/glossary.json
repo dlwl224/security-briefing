@@ -14,6 +14,13 @@
     "post": "/briefing/2026-11-24/"
   },
   {
+    "term": "CI/CD 환경",
+    "english": "Continuous Integration / Continuous Delivery",
+    "definition": "개발자가 작성한 소프트웨어 코드를 자동으로 검사하고 실제 서버에 배포해 주는 일종의 '소프트웨어 자동 조립 공장'이다.",
+    "first_seen": "2026-11-27",
+    "post": "/briefing/2026-11-27/"
+  },
+  {
     "term": "CVSS",
     "english": "Common Vulnerability Scoring System",
     "definition": "컴퓨터 보안 취약점의 심각성을 0부터 10까지의 점수로 매겨 얼마나 위험한지 알려주는 객관적인 지표이다.",
@@ -84,6 +91,13 @@
     "post": "/briefing/2026-11-18/"
   },
   {
+    "term": "비인가 접근",
+    "english": "Unauthorized Access",
+    "definition": "권한이 없는 사람이 허락 없이 남의 컴퓨터 시스템이나 비밀 자료실에 몰래 들어가는 행위이다.",
+    "first_seen": "2026-11-27",
+    "post": "/briefing/2026-11-27/"
+  },
+  {
     "term": "엔진엑스",
     "english": "NGINX",
     "definition": "인터넷 사용자의 웹사이트 접속 요청을 가장 앞에서 받아 처리해 주고 여러 서버로 나누어 주는 안내원 역할을 하는 고성능 웹서버 프로그램이다.",
@@ -152,6 +166,20 @@
     "definition": "여러 개의 보안 허점을 사방의 열쇠처럼 차례대로 엮어서 시스템 방어막을 뚫는 공격 방법이다.",
     "first_seen": "2026-11-26",
     "post": "/briefing/2026-11-26/"
+  },
+  {
+    "term": "콘텐츠 관리 시스템",
+    "english": "Content Management System (CMS)",
+    "definition": "복잡한 프로그래밍 코드를 몰라도 블로그 글을 쓰듯 웹사이트를 쉽게 만들고 관리할 수 있게 돕는 도구이다.",
+    "first_seen": "2026-11-27",
+    "post": "/briefing/2026-11-27/"
+  },
+  {
+    "term": "토큰",
+    "english": "Token",
+    "definition": "특정 시스템이나 웹서비스에 들어갈 수 있는 권한을 증명해 주는 일종의 '디지털 일회용 출입증'이다.",
+    "first_seen": "2026-11-27",
+    "post": "/briefing/2026-11-27/"
   },
   {
     "term": "파이파이",
